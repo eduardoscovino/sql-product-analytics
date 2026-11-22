@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL for Product Analytics · Week 1 · Signup Funnel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f5f2; --panel:#ffffff; --ink:#1d1d1b; --muted:#6b6a65; --line:#e4e2dc;
+    --accent:#1f6f5c; --accent-soft:#e3f0ec; --err:#b3261e; --code-bg:#1e2124; --code-ink:#e6e6e3; --chip:#efede8;
+    --l1:#2f7d4f; --l2:#2f6690; --l3:#7a4fa3; --l4:#b0413e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif}
+  a{color:var(--accent)}
+  code{font-family:'JetBrains Mono',monospace;font-size:.88em;background:var(--chip);padding:1px 5px;border-radius:4px}
+  .wrap{max-width:1260px;margin:0 auto;padding:28px 20px 60px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .kicker a{color:inherit;text-decoration:none}
+  h1{font-size:30px;line-height:1.15;margin:6px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--muted);max-width:720px;margin:0}
+  .lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--panel)}
+  .lang button{border:0;background:none;padding:7px 14px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .lang button.on{background:var(--ink);color:var(--bg)}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-areas:"intro ide" "qs ide";gap:0 20px;align-items:start}
+  .intro{grid-area:intro} .qs{grid-area:qs} .ide{grid-area:ide;position:sticky;top:14px;align-self:start}
+  @media (max-width:980px){
+    .grid{grid-template-columns:1fr;grid-template-areas:"intro" "ide" "qs"}
+    .ide{position:static;margin-bottom:16px}
+    textarea#editor{min-height:200px}
+  }
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+  .card h2{font-size:17px;margin:0 0 10px}
+  .card p{margin:0 0 10px} .card p:last-child{margin-bottom:0}
+  .funnel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 4px;font-family:'JetBrains Mono',monospace;font-size:12.5px}
+  .funnel span.step{background:var(--accent-soft);color:var(--accent);padding:4px 9px;border-radius:6px}
+  .funnel span.arrow{color:var(--muted)}
+  .meta{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+  .meta b{color:var(--ink);font-weight:600}
+  .howto{background:var(--accent-soft);border-radius:10px;padding:12px 14px;font-size:14px;margin-top:12px}
+  .howto ol{margin:4px 0 0;padding-left:20px}
+  table.schema{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+  table.schema caption{text-align:left;font-weight:600;font-family:'JetBrains Mono',monospace;padding:4px 0 6px;font-size:13.5px}
+  table.schema td{border-top:1px solid var(--line);padding:5px 6px;vertical-align:top}
+  table.schema td:first-child{font-family:'JetBrains Mono',monospace;white-space:nowrap;width:1%}
+  table.schema td:nth-child(2){color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px;white-space:nowrap;width:1%}
+
+  .level{display:flex;align-items:center;gap:10px;margin:26px 2px 10px}
+  .level h3{margin:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+  .level .rule{flex:1;height:1px;background:var(--line)}
+  .q{border-left:4px solid var(--line)}
+  .q.l1{border-left-color:var(--l1)} .q.l2{border-left-color:var(--l2)} .q.l3{border-left-color:var(--l3)} .q.l4{border-left-color:var(--l4)}
+  .qhead{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+  .qnum{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:13px;color:#fff;border-radius:6px;padding:2px 7px}
+  .l1 .qnum{background:var(--l1)} .l2 .qnum{background:var(--l2)} .l3 .qnum{background:var(--l3)} .l4 .qnum{background:var(--l4)}
+  .qhead h4{margin:0;font-size:16px}
+  .chips{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}
+  .chips span{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+  .biz{background:var(--bg);border-radius:8px;padding:9px 12px;font-size:14px;margin-bottom:10px}
+  .biz b{color:var(--accent)}
+  details{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+  summary{cursor:pointer;font-weight:600;font-size:13.5px;color:var(--muted)}
+  summary:hover{color:var(--ink)}
+  details .inner{padding-top:8px;font-size:14px}
+  details.sol summary{color:var(--accent)}
+  pre.sql{background:var(--code-bg);color:var(--code-ink);padding:12px 14px;border-radius:8px;overflow:auto;font:12.5px/1.5 'JetBrains Mono',monospace;margin:8px 0}
+  .btn{font:inherit;font-size:13px;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--panel);padding:6px 12px;cursor:pointer;color:var(--ink)}
+  .btn:hover{border-color:var(--ink)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .takeaway{background:var(--accent-soft);border-radius:8px;padding:10px 12px;margin-top:10px}
+  .takeaway ul{margin:6px 0 0;padding-left:18px}
+
+  .ide .card{padding:0;overflow:hidden}
+  .toolbar{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .toolbar .status{margin-left:auto;font-size:12.5px;color:var(--muted)}
+  .toolbar .status.ok{color:var(--accent)}
+  .quick{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg);font-size:12.5px;align-items:center}
+  .quick .btn{padding:3px 9px;font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:500}
+  textarea#editor{display:block;width:100%;min-height:300px;resize:vertical;border:0;outline:0;padding:14px 16px;background:var(--code-bg);color:var(--code-ink);font:13px/1.55 'JetBrains Mono',monospace;tab-size:2;white-space:pre}
+  .results{max-height:400px;overflow:auto}
+  .results table{border-collapse:collapse;width:100%;font:12.5px/1.4 'JetBrains Mono',monospace}
+  .results th{position:sticky;top:0;background:var(--panel);text-align:left;border-bottom:2px solid var(--ink);padding:7px 10px;white-space:nowrap}
+  .results td{border-bottom:1px solid var(--line);padding:5px 10px;white-space:nowrap}
+  .results td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .results td.null{color:var(--muted);font-style:italic}
+  .results .empty,.results .error{padding:16px;font-size:13.5px;color:var(--muted)}
+  .results .error{color:var(--err);font-family:'JetBrains Mono',monospace;white-space:pre-wrap}
+  .resmeta{padding:7px 12px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);display:flex;justify-content:space-between}
+  .kbd{font-family:'JetBrains Mono',monospace;font-size:11.5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--panel)}
+  footer{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
+  [data-lang-only]{display:none}
+  html[lang="en"] [data-lang-only="en"], html[lang="pt"] [data-lang-only="pt"]{display:revert}
+
+  html[data-theme="dark"]{
+    --bg:#141516; --panel:#1d1f21; --ink:#e8e6e1; --muted:#9a988f; --line:#2f3235;
+    --accent:#4fb393; --accent-soft:#1c3029; --err:#ff8a80; --code-bg:#0f1011; --code-ink:#e6e6e3; --chip:#2a2c2f;
+    --l1:#5cb87f; --l2:#5b9bd0; --l3:#a983d1; --l4:#e0706b;
+    color-scheme:dark;
+  }
+  html[data-theme="dark"] .qnum, html[data-theme="dark"] .btn.primary{color:#0f1011}
+  .theme{border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);width:34px;height:34px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+  .theme:hover{border-color:var(--ink)}
+  .controls{display:flex;gap:8px;align-items:center}
+</style>
+<script>
+  (function(){ var t; try { t = localStorage.getItem('sqlpa-theme'); } catch(e) {}
+    if (t !== 'dark' && t !== 'light') t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t); })();
+</script>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker"><a href="../" data-i18n="kicker"></a></div>
+      <h1 data-i18n="title"></h1>
+      <p class="sub" data-i18n="subtitle"></p>
+    </div>
+    <div class="controls"><button class="theme" id="theme" type="button"></button><div class="lang" role="group" aria-label="Language">
+      <button data-setlang="pt">PT</button>
+      <button data-setlang="en">EN</button>
+    </div></div>
+  </header>
+
+  <div class="grid">
+    <div class="intro">
+      <section class="card">
+        <h2 data-i18n="caseTitle"></h2>
+        <div data-lang-only="en">
+          <p><b>Trilha</b> is a (fictional) language-learning app. People land on the website, create an account, finish onboarding and, eventually, buy their first subscription.</p>
+          <p>On <b>October 15, 2026</b> the product team launched <b>onboarding v2</b>, a shorter flow. It's planning season and everyone (Marketing, Design, CRM, the CEO) has a question for the data. You have the answers in 8 queries.</p>
+        </div>
+        <div data-lang-only="pt">
+          <p><b>Trilha</b> é um app (fictício) de idiomas. As pessoas chegam pelo site, criam uma conta, concluem o onboarding e, eventualmente, compram a primeira assinatura.</p>
+          <p>Em <b>15 de outubro de 2026</b> o time de produto lançou o <b>onboarding v2</b>, um fluxo mais curto. É época de planejamento e todo mundo (Marketing, Design, CRM, o CEO) tem uma pergunta para os dados. Você tem as respostas em 8 consultas.</p>
+        </div>
+        <div class="funnel">
+          <span class="step">landing_view</span><span class="arrow">→</span>
+          <span class="step">signup</span><span class="arrow">→</span>
+          <span class="step">onboarding_complete</span><span class="arrow">→</span>
+          <span class="step">first_purchase</span>
+        </div>
+        <div class="meta">
+          <span><span data-i18n="period"></span> <b>2026-09-01 → 2026-11-15</b></span>
+          <span><span data-i18n="engine"></span> <b>SQLite</b></span>
+        </div>
+        <div class="howto">
+          <b data-i18n="howtoTitle"></b>
+          <ol data-lang-only="en">
+            <li>Click <b>users</b> or <b>events</b> above the editor to see what the data looks like.</li>
+            <li>Write your query and press <b>Run</b> (or Ctrl/⌘ + Enter).</li>
+            <li>Stuck? Open the <b>hint</b>. Done? Compare with the <b>solution</b>.</li>
+          </ol>
+          <ol data-lang-only="pt">
+            <li>Clique em <b>users</b> ou <b>events</b> acima do editor para ver como são os dados.</li>
+            <li>Escreva sua consulta e clique em <b>Executar</b> (ou Ctrl/⌘ + Enter).</li>
+            <li>Travou? Abra a <b>dica</b>. Terminou? Compare com a <b>solução</b>.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="schemaTitle"></h2>
+        <table class="schema">
+          <caption>users <span style="color:var(--muted);font-weight:400" data-i18n="usersDesc"></span></caption>
+          <tr><td>user_id</td><td>INTEGER</td><td data-i18n="c_user_id"></td></tr>
+          <tr><td>first_seen_at</td><td>TEXT</td><td data-i18n="c_first_seen"></td></tr>
+          <tr><td>acquisition_channel</td><td>TEXT</td><td>organic · paid_search · paid_social · referral</td></tr>
+          <tr><td>device</td><td>TEXT</td><td>mobile · desktop</td></tr>
+          <tr><td>country</td><td>TEXT</td><td>BR · MX · AR · CO · CL</td></tr>
+        </table>
+        <table class="schema">
+          <caption>events <span style="color:var(--muted);font-weight:400" data-i18n="eventsDesc"></span></caption>
+          <tr><td>event_id</td><td>INTEGER</td><td data-i18n="c_event_id"></td></tr>
+          <tr><td>user_id</td><td>INTEGER</td><td data-i18n="c_fk"></td></tr>
+          <tr><td>event_name</td><td>TEXT</td><td>landing_view · signup · onboarding_complete · first_purchase</td></tr>
+          <tr><td>event_at</td><td>TEXT</td><td data-i18n="c_event_at"></td></tr>
+        </table>
+      </section>
+    </div>
+
+    <div class="ide">
+      <section class="card">
+        <div class="toolbar">
+          <button class="btn primary" id="run" disabled data-i18n="run"></button>
+          <button class="btn" id="reset" data-i18n="reset"></button>
+          <span style="font-size:12px;color:var(--muted)"><span class="kbd">Ctrl</span>/<span class="kbd">⌘</span> + <span class="kbd">Enter</span></span>
+          <span class="status" id="status"></span>
+        </div>
+        <div class="quick">
+          <span data-i18n="preview" style="color:var(--muted)"></span>
+          <button class="btn" data-quick="SELECT * FROM users LIMIT 10;">users</button>
+          <button class="btn" data-quick="SELECT * FROM events LIMIT 10;">events</button>
+        </div>
+        <textarea id="editor" spellcheck="false" aria-label="SQL editor"></textarea>
+        <div class="results" id="results"></div>
+        <div class="resmeta"><span id="rowcount"></span><span id="timing"></span></div>
+      </section>
+      <p style="font-size:12.5px;color:var(--muted);margin:0 4px 16px" data-i18n="privacy"></p>
+    </div>
+
+    <div class="qs" id="questions"></div>
+  </div>
+
+  <footer data-i18n="footer"></footer>
+</div>
+
+<script src="sql-wasm.js"></script>
+<script>
+const SOL = [
+ "SELECT acquisition_channel,\n       COUNT(*) AS visitors\nFROM users\nGROUP BY acquisition_channel\nORDER BY visitors DESC;",
+ "SELECT event_name,\n       COUNT(*)                AS total_events,\n       COUNT(DISTINCT user_id) AS unique_users\nFROM events\nGROUP BY event_name\nORDER BY unique_users DESC;",
+ "SELECT u.device,\n       COUNT(DISTINCT u.user_id) AS visitors,\n       COUNT(DISTINCT e.user_id) AS signups,\n       ROUND(100.0 * COUNT(DISTINCT e.user_id) / COUNT(DISTINCT u.user_id), 1) AS signup_rate_pct\nFROM users u\nLEFT JOIN events e\n       ON e.user_id = u.user_id\n      AND e.event_name = 'signup'\nGROUP BY u.device\nORDER BY signup_rate_pct DESC;",
+ "SELECT u.acquisition_channel,\n       COUNT(DISTINCT CASE WHEN e.event_name = 'signup'         THEN u.user_id END) AS signups,\n       COUNT(DISTINCT CASE WHEN e.event_name = 'first_purchase' THEN u.user_id END) AS paying_customers,\n       ROUND(100.0\n             * COUNT(DISTINCT CASE WHEN e.event_name = 'first_purchase' THEN u.user_id END)\n             / COUNT(DISTINCT CASE WHEN e.event_name = 'signup'         THEN u.user_id END), 1) AS signup_to_paying_pct\nFROM users u\nJOIN events e ON e.user_id = u.user_id\nGROUP BY u.acquisition_channel\nORDER BY signup_to_paying_pct DESC;",
+ "SELECT u.user_id,\n       u.country,\n       u.acquisition_channel,\n       MIN(e.event_at) AS signup_at\nFROM users u\nJOIN events e ON e.user_id = u.user_id\nWHERE e.event_name = 'signup'\n  AND e.event_at >= '2026-11-01'\n  AND u.user_id NOT IN (SELECT user_id\n                        FROM events\n                        WHERE event_name = 'onboarding_complete')\nGROUP BY u.user_id, u.country, u.acquisition_channel\nORDER BY signup_at DESC;",
+ "SELECT CASE WHEN s.signup_at < '2026-10-15' THEN '1. before v2' ELSE '2. after v2' END AS period,\n       COUNT(*) AS signups,\n       SUM(CASE WHEN s.user_id IN (SELECT user_id FROM events\n                                   WHERE event_name = 'onboarding_complete')\n                THEN 1 ELSE 0 END) AS completed_onboarding,\n       ROUND(100.0 * SUM(CASE WHEN s.user_id IN (SELECT user_id FROM events\n                                                 WHERE event_name = 'onboarding_complete')\n                              THEN 1 ELSE 0 END) / COUNT(*), 1) AS onboarding_rate_pct\nFROM (SELECT user_id, MIN(event_at) AS signup_at\n      FROM events\n      WHERE event_name = 'signup'\n      GROUP BY user_id) AS s\nWHERE s.signup_at < '2026-11-09'\nGROUP BY period\nORDER BY period;",
+ "SELECT purchase_date,\n       new_customers,\n       SUM(new_customers) OVER (ORDER BY purchase_date) AS cumulative_customers\nFROM (SELECT DATE(event_at) AS purchase_date,\n             COUNT(DISTINCT user_id) AS new_customers\n      FROM events\n      WHERE event_name = 'first_purchase'\n      GROUP BY DATE(event_at)) AS daily\nORDER BY purchase_date;",
+ "SELECT step,\n       event_name,\n       users,\n       ROUND(100.0 * users / FIRST_VALUE(users) OVER (ORDER BY step), 1) AS pct_of_visitors,\n       ROUND(100.0 * users / LAG(users) OVER (ORDER BY step), 1)        AS pct_of_previous_step\nFROM (SELECT CASE event_name\n               WHEN 'landing_view'        THEN 1\n               WHEN 'signup'              THEN 2\n               WHEN 'onboarding_complete' THEN 3\n               WHEN 'first_purchase'      THEN 4\n             END AS step,\n             event_name,\n             COUNT(DISTINCT user_id) AS users\n      FROM events\n      GROUP BY event_name) AS funnel\nORDER BY step;"
+];
+
+const LEVELS = {
+  l1:{pt:"Nível 1 · Agregações", en:"Level 1 · Aggregations"},
+  l2:{pt:"Nível 2 · JOINs com agregação", en:"Level 2 · JOINs with aggregation"},
+  l3:{pt:"Nível 3 · Subconsultas", en:"Level 3 · Subqueries"},
+  l4:{pt:"Nível 4 · Funções de janela", en:"Level 4 · Window functions"}
+};
+
+const Q = [
+ {lvl:"l1", chips:["COUNT(*)","GROUP BY","ORDER BY"],
+  title:{en:"Where do our visitors come from?", pt:"De onde vêm nossos visitantes?"},
+  ask:{en:"How many visitors came from each <code>acquisition_channel</code>? Sort from largest to smallest.",
+       pt:"Quantos visitantes vieram de cada <code>acquisition_channel</code>? Ordene do maior para o menor."},
+  biz:{en:"Marketing presents next quarter's plan tomorrow and needs traffic by channel. Which channel brings the most visitors?",
+       pt:"O Marketing apresenta o plano do próximo trimestre amanhã e precisa do tráfego por canal. Qual canal traz mais visitantes?"},
+  hint:{en:"Everything is in the <code>users</code> table, and one row = one visitor. Group by channel and count the rows.",
+        pt:"Tudo está na tabela <code>users</code>, e uma linha = um visitante. Agrupe por canal e conte as linhas."},
+  take:{en:["<b>organic</b> leads (3,226), then paid_social (2,455), paid_search (2,265) and referral (1,054).","Keep these numbers in mind: in Q4 you'll see that <i>volume</i> and <i>quality</i> tell very different stories."],
+        pt:["<b>organic</b> lidera (3.226), seguido de paid_social (2.455), paid_search (2.265) e referral (1.054).","Guarde esses números: na P4 você vai ver que <i>volume</i> e <i>qualidade</i> contam histórias bem diferentes."]}},
+ {lvl:"l1", chips:["COUNT(*)","COUNT(DISTINCT)","GROUP BY"],
+  title:{en:"Why don't the numbers match?", pt:"Por que os números não batem?"},
+  ask:{en:"For each <code>event_name</code>, show the total number of events and the number of unique users.",
+       pt:"Para cada <code>event_name</code>, mostre o total de eventos e o número de usuários únicos."},
+  biz:{en:"The weekly dashboard shows 2,402 signups, but the CRM team counts fewer new accounts. Who is right?",
+       pt:"O dashboard semanal mostra 2.402 cadastros, mas o time de CRM conta menos contas novas. Quem está certo?"},
+  hint:{en:"<code>COUNT(*)</code> counts rows. <code>COUNT(DISTINCT user_id)</code> counts people. Put both side by side.",
+        pt:"<code>COUNT(*)</code> conta linhas. <code>COUNT(DISTINCT user_id)</code> conta pessoas. Coloque os dois lado a lado."},
+  take:{en:["<b>signup</b>: 2,402 events but only 2,334 people. About 3% are duplicates from tracking. CRM was right.","<b>landing_view</b>: 14,082 events from 9,000 people. Visitors come back, and that's normal.","Rule of thumb: if the question is about <i>people</i>, count people."],
+        pt:["<b>signup</b>: 2.402 eventos, mas só 2.334 pessoas. Cerca de 3% são duplicatas do tracking. O CRM estava certo.","<b>landing_view</b>: 14.082 eventos de 9.000 pessoas. Visitantes voltam, e isso é normal.","Regra de ouro: se a pergunta é sobre <i>pessoas</i>, conte pessoas."]}},
+ {lvl:"l2", chips:["LEFT JOIN","COUNT(DISTINCT)","%"],
+  title:{en:"Is mobile the problem?", pt:"O problema é o mobile?"},
+  ask:{en:"For each <code>device</code>, show the visitors, how many of them signed up, and the signup rate (%).",
+       pt:"Para cada <code>device</code>, mostre os visitantes, quantos deles se cadastraram e a taxa de cadastro (%)."},
+  biz:{en:"Design wants to spend the next sprint redesigning the mobile landing page because \"mobile converts badly\". Does the data back that up?",
+       pt:"O Design quer gastar a próxima sprint redesenhando a landing mobile porque \"o mobile converte mal\". Os dados confirmam?"},
+  hint:{en:"Start from <code>users</code> (all visitors) and <code>LEFT JOIN events</code> keeping only signups: put <code>e.event_name = 'signup'</code> in the <code>ON</code>, not in the <code>WHERE</code>. Then <code>COUNT(DISTINCT u.user_id)</code> gives visitors and <code>COUNT(DISTINCT e.user_id)</code> gives signups. Use <code>100.0</code> (not 100) so the division keeps decimals.",
+        pt:"Comece por <code>users</code> (todos os visitantes) e faça <code>LEFT JOIN events</code> só com cadastros: coloque <code>e.event_name = 'signup'</code> no <code>ON</code>, não no <code>WHERE</code>. Aí <code>COUNT(DISTINCT u.user_id)</code> dá os visitantes e <code>COUNT(DISTINCT e.user_id)</code> dá os cadastros. Use <code>100.0</code> (não 100) para a divisão manter as casas decimais."},
+  take:{en:["desktop 26.7% vs mobile 25.5%: only 1.2 p.p. apart.","Mobile isn't the main problem, so a whole sprint there would pay off little. Good analysis also <b>kills weak hypotheses</b> before they cost time.","Try it: move the signup filter to the <code>WHERE</code>. What happens to the visitor count, and why?"],
+        pt:["desktop 26,7% vs mobile 25,5%: só 1,2 p.p. de diferença.","O mobile não é o problema principal, então uma sprint inteira ali traria pouco retorno. Boa análise também <b>derruba hipóteses fracas</b> antes que custem tempo.","Teste: mova o filtro de signup para o <code>WHERE</code>. O que acontece com os visitantes, e por quê?"]}},
+ {lvl:"l2", chips:["JOIN","CASE WHEN","COUNT(DISTINCT)"],
+  title:{en:"Which channel brings customers who pay?", pt:"Qual canal traz clientes que pagam?"},
+  ask:{en:"For each channel, show signups, paying customers (<code>first_purchase</code>) and the % of signups that became paying customers.",
+       pt:"Para cada canal, mostre cadastros, clientes pagantes (<code>first_purchase</code>) e o % de cadastros que viraram pagantes."},
+  biz:{en:"Marketing wants to move budget to <b>paid_social</b> because \"it brings the most signups\". Would you approve?",
+       pt:"O Marketing quer mover verba para <b>paid_social</b> porque \"é o canal que mais traz cadastros\". Você aprovaria?"},
+  hint:{en:"Join <code>users</code> and <code>events</code>. To count two different things in one query, put a <code>CASE</code> inside the count: <code>COUNT(DISTINCT CASE WHEN e.event_name = 'signup' THEN u.user_id END)</code>. Do the same for <code>first_purchase</code>.",
+        pt:"Junte <code>users</code> e <code>events</code>. Para contar duas coisas diferentes na mesma consulta, coloque um <code>CASE</code> dentro do count: <code>COUNT(DISTINCT CASE WHEN e.event_name = 'signup' THEN u.user_id END)</code>. Faça o mesmo para <code>first_purchase</code>."},
+  take:{en:["<b>paid_social</b> has the most signups (756), but only 3.4% pay: 26 customers.","<b>referral</b>: 23.4% become paying customers, about 7× better.","Don't approve it as framed. Optimize for paying customers, not signups. Caveat: without cost per channel, this ranks <i>quality</i>, not ROI."],
+        pt:["<b>paid_social</b> tem mais cadastros (756), mas só 3,4% pagam: 26 clientes.","<b>referral</b>: 23,4% viram pagantes, cerca de 7× melhor.","Não aprove do jeito que está. Otimize por clientes pagantes, não por cadastros. Ressalva: sem custo por canal, isto mede <i>qualidade</i>, não ROI."]}},
+ {lvl:"l3", chips:["WHERE … NOT IN (SELECT …)"],
+  title:{en:"Who should get the reminder email?", pt:"Quem deve receber o e-mail de lembrete?"},
+  ask:{en:"List the users who signed up in November (from <code>2026-11-01</code>) but <b>never</b> completed onboarding. Show <code>user_id</code>, country, channel and signup date, newest first. How many are there?",
+       pt:"Liste os usuários que se cadastraram em novembro (a partir de <code>2026-11-01</code>) mas <b>nunca</b> concluíram o onboarding. Mostre <code>user_id</code>, país, canal e data do cadastro, do mais recente ao mais antigo. Quantos são?"},
+  biz:{en:"CRM is sending a \"finish setting up your account\" email tomorrow and needs the list.",
+       pt:"O CRM vai disparar amanhã um e-mail de \"termine de configurar sua conta\" e precisa da lista."},
+  hint:{en:"Filter signups in the <code>WHERE</code>, and exclude whoever appears in a subquery: <code>AND u.user_id NOT IN (SELECT user_id FROM events WHERE event_name = 'onboarding_complete')</code>. The row count of the result answers \"how many\".",
+        pt:"Filtre os cadastros no <code>WHERE</code> e exclua quem aparece numa subconsulta: <code>AND u.user_id NOT IN (SELECT user_id FROM events WHERE event_name = 'onboarding_complete')</code>. A contagem de linhas do resultado responde \"quantos\"."},
+  take:{en:["<b>222 users.</b> Your query just turned into an action.","Before sending: people who signed up in the last day or two may still finish on their own. Consider leaving them out of this send."],
+        pt:["<b>222 usuários.</b> Sua consulta acabou de virar uma ação.","Antes de enviar: quem se cadastrou nos últimos 1–2 dias ainda pode concluir sozinho. Considere deixá-los fora deste disparo."]}},
+ {lvl:"l3", chips:["subquery in FROM","IN (SELECT …)","CASE WHEN"],
+  title:{en:"Did the new onboarding work?", pt:"O novo onboarding funcionou?"},
+  ask:{en:"Compare the % of signups that completed onboarding <b>before</b> and <b>after</b> the v2 launch (2026-10-15). Use each user's first signup date and only signups made before <code>2026-11-09</code>.",
+       pt:"Compare o % de cadastros que concluíram o onboarding <b>antes</b> e <b>depois</b> do lançamento do v2 (15/10/2026). Use a data do primeiro cadastro de cada usuário e só cadastros feitos antes de <code>2026-11-09</code>."},
+  biz:{en:"The product team says v2 \"obviously worked\". The CEO wants a number.",
+       pt:"O time de produto diz que o v2 \"obviamente funcionou\". O CEO quer um número."},
+  hint:{en:"Step 1: a subquery in the <code>FROM</code> with one row per user and their first signup, <code>MIN(event_at)</code>. Step 2: label each row with <code>CASE WHEN signup_at &lt; '2026-10-15' …</code> and check whether the user is <code>IN</code> the list of people who completed onboarding. <b>Why stop at Nov 9?</b> Very recent users haven't had time to finish yet, and including them would unfairly pull the \"after\" number down.",
+        pt:"Passo 1: uma subconsulta no <code>FROM</code> com uma linha por usuário e o primeiro cadastro, <code>MIN(event_at)</code>. Passo 2: rotule cada linha com <code>CASE WHEN signup_at &lt; '2026-10-15' …</code> e verifique se o usuário está <code>IN</code> na lista de quem concluiu o onboarding. <b>Por que parar em 9/nov?</b> Usuários muito recentes ainda não tiveram tempo de concluir, e incluí-los puxaria o número do \"depois\" para baixo injustamente."},
+  take:{en:["Before: 46.2%. After: 58.7%. That's <b>+12.5 p.p.</b>","It's a strong signal, but before/after isn't an A/B test: seasonality and campaigns changed too. An honest line for the CEO: \"onboarding completion rose 12 p.p. after v2, most likely because of it.\""],
+        pt:["Antes: 46,2%. Depois: 58,7%. São <b>+12,5 p.p.</b>","É um sinal forte, mas antes/depois não é teste A/B: sazonalidade e campanhas também mudaram. Uma frase honesta para o CEO: \"a conclusão do onboarding subiu 12 p.p. depois do v2, muito provavelmente por causa dele.\""]}},
+ {lvl:"l4", chips:["SUM() OVER (ORDER BY …)","running total"],
+  title:{en:"When did we hit the goal?", pt:"Quando batemos a meta?"},
+  ask:{en:"Show new paying customers per day and the cumulative total. On which day did we cross <b>200 paying customers</b>?",
+       pt:"Mostre os novos clientes pagantes por dia e o total acumulado. Em que dia passamos de <b>200 clientes pagantes</b>?"},
+  biz:{en:"The quarter's OKR was \"200 paying customers by October 31\". Did we make it? When?",
+       pt:"O OKR do trimestre era \"200 clientes pagantes até 31 de outubro\". Batemos? Quando?"},
+  hint:{en:"First count customers per day in a subquery: <code>DATE(event_at)</code> and <code>COUNT(DISTINCT user_id)</code>. On top of it, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> adds up everything up to each day.",
+        pt:"Primeiro conte os clientes por dia numa subconsulta: <code>DATE(event_at)</code> e <code>COUNT(DISTINCT user_id)</code>. Por cima dela, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> soma tudo até cada dia."},
+  take:{en:["We crossed 200 on <b>Oct 28</b> (202 customers). OKR achieved, with 3 days to spare.","September closed at 94; October added 117 more. Running totals are the standard way to track goals on dashboards."],
+        pt:["Passamos de 200 em <b>28/out</b> (202 clientes). OKR batido, com 3 dias de folga.","Setembro fechou em 94; outubro somou mais 117. O acumulado é o jeito padrão de acompanhar metas em dashboards."]}},
+ {lvl:"l4", chips:["LAG()","FIRST_VALUE()","OVER (ORDER BY …)"],
+  title:{en:"The funnel slide for the leadership meeting", pt:"O slide do funil para a reunião de liderança"},
+  ask:{en:"Build the funnel: unique users at each step, % of all visitors, and % of the previous step.",
+       pt:"Monte o funil: usuários únicos em cada etapa, % do total de visitantes e % da etapa anterior."},
+  biz:{en:"This is the slide leadership looks at every month. Where is the biggest leak, and where would you invest first?",
+       pt:"Este é o slide que a liderança olha todo mês. Onde está o maior vazamento, e onde você investiria primeiro?"},
+  hint:{en:"In a subquery, count unique users per <code>event_name</code> and give each step a number with <code>CASE</code> (landing_view = 1 … first_purchase = 4). Outside it, <code>FIRST_VALUE(users) OVER (ORDER BY step)</code> returns the top of the funnel and <code>LAG(users) OVER (ORDER BY step)</code> returns the previous step.",
+        pt:"Numa subconsulta, conte usuários únicos por <code>event_name</code> e dê um número a cada etapa com <code>CASE</code> (landing_view = 1 … first_purchase = 4). Fora dela, <code>FIRST_VALUE(users) OVER (ORDER BY step)</code> traz o topo do funil e <code>LAG(users) OVER (ORDER BY step)</code> traz a etapa anterior."},
+  take:{en:["Visit → signup 25.9% · signup → onboarding 50.5% · onboarding → purchase 24.9%. In the end, 3.3% of visitors pay.","<b>Half of signups never activate.</b> They already showed interest, so improving onboarding (as v2 started to do, Q6) is usually cheaper than buying more traffic.","Everything you did in Q1–Q7 fits in this one table."],
+        pt:["Visita → cadastro 25,9% · cadastro → onboarding 50,5% · onboarding → compra 24,9%. No fim, 3,3% dos visitantes pagam.","<b>Metade dos cadastros nunca ativa.</b> Essas pessoas já mostraram interesse, então melhorar o onboarding (como o v2 começou a fazer, P6) costuma sair mais barato que comprar mais tráfego.","Tudo o que você fez da P1 à P7 cabe nesta tabela."]}}
+];
+
+const T = {
+  en:{
+    kicker:"SQL for Product Analytics · Week 1", title:"The Signup Funnel",
+    subtitle:"8 real business questions, from your first GROUP BY to window functions. Write SQL right here in your browser. Nothing to install, no account needed.",
+    caseTitle:"The case", period:"Period:", engine:"Engine:", howtoTitle:"How to play",
+    schemaTitle:"The data", usersDesc:"· one row per visitor (9,000)", eventsDesc:"· one row per action (~18,000)",
+    c_user_id:"Unique visitor id", c_first_seen:"First visit (YYYY-MM-DD HH:MM:SS)", c_event_id:"Unique event id",
+    c_fk:"Who did it → users.user_id", c_event_at:"When it happened (YYYY-MM-DD HH:MM:SS)",
+    hint:"💡 Hint", solution:"✅ Solution & takeaways", loadEditor:"Open in editor ↗", takeaways:"Takeaways",
+    run:"▶ Run", reset:"Reset", loading:"Loading database…", ready:"Database ready", preview:"Peek at the data:",
+    noResults:"Run a query to see results here.", noRows:"Query ran successfully: no rows returned.",
+    rows:n=>`${n.toLocaleString('en')} row${n===1?'':'s'}`, shown:(a,b)=>`showing first ${a} of ${b.toLocaleString('en')} rows`,
+    privacy:"Everything runs locally in your browser (SQLite compiled to WebAssembly). Your queries never leave this page.",
+    footer:"Synthetic data generated for teaching. Trilha is a fictional company.",
+    starter:"-- Welcome! Write your SQL here and press Ctrl/⌘ + Enter.\n-- Try this first, then start with Q1:\n\nSELECT *\nFROM users\nLIMIT 10;"
+  },
+  pt:{
+    kicker:"SQL para Product Analytics · Semana 1", title:"O Funil de Cadastro",
+    subtitle:"8 perguntas reais de negócio, do primeiro GROUP BY até funções de janela. Escreva SQL aqui mesmo no navegador. Sem instalar nada, sem criar conta.",
+    caseTitle:"O case", period:"Período:", engine:"Banco:", howtoTitle:"Como jogar",
+    schemaTitle:"Os dados", usersDesc:"· uma linha por visitante (9.000)", eventsDesc:"· uma linha por ação (~18.000)",
+    c_user_id:"Id único do visitante", c_first_seen:"Primeira visita (AAAA-MM-DD HH:MM:SS)", c_event_id:"Id único do evento",
+    c_fk:"Quem fez → users.user_id", c_event_at:"Quando aconteceu (AAAA-MM-DD HH:MM:SS)",
+    hint:"💡 Dica", solution:"✅ Solução e conclusões", loadEditor:"Abrir no editor ↗", takeaways:"Conclusões",
+    run:"▶ Executar", reset:"Limpar", loading:"Carregando banco…", ready:"Banco pronto", preview:"Espiar os dados:",
+    noResults:"Execute uma consulta para ver os resultados aqui.", noRows:"Consulta executada: nenhuma linha retornada.",
+    rows:n=>`${n.toLocaleString('pt-BR')} linha${n===1?'':'s'}`, shown:(a,b)=>`exibindo as primeiras ${a} de ${b.toLocaleString('pt-BR')} linhas`,
+    privacy:"Tudo roda localmente no seu navegador (SQLite compilado para WebAssembly). Suas consultas não saem desta página.",
+    footer:"Dados sintéticos gerados para fins didáticos. A Trilha é uma empresa fictícia.",
+    starter:"-- Bem-vindo(a)! Escreva seu SQL aqui e aperte Ctrl/⌘ + Enter.\n-- Teste isto primeiro e depois comece pela P1:\n\nSELECT *\nFROM users\nLIMIT 10;"
+  }
+};
+
+let lang = 'pt', db = null, dbReady = false;
+const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
+const editor = $('#editor');
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+function renderQuestions(){
+  const open = new Set([...$$('#questions details[open]')].map(d => d.dataset.key));
+  let html = '', last = '';
+  Q.forEach((q, i) => {
+    const n = i + 1;
+    if (q.lvl !== last){ html += `<div class="level"><h3 style="color:var(--${q.lvl})">${LEVELS[q.lvl][lang]}</h3><div class="rule"></div></div>`; last = q.lvl; }
+    const lbl = (lang === 'pt' ? 'P' : 'Q') + n;
+    html += `<section class="card q ${q.lvl}">
+      <div class="qhead"><span class="qnum">${lbl}</span><h4>${q.title[lang]}</h4></div>
+      <div class="chips">${q.chips.map(c => `<span>${esc(c)}</span>`).join('')}</div>
+      <div class="biz"><b>${lang === 'pt' ? 'Contexto' : 'Context'}:</b> ${q.biz[lang]}</div>
+      <p>${q.ask[lang]}</p>
+      <details data-key="h${n}" ${open.has('h'+n)?'open':''}><summary>${T[lang].hint}</summary><div class="inner">${q.hint[lang]}</div></details>
+      <details class="sol" data-key="s${n}" ${open.has('s'+n)?'open':''}><summary>${T[lang].solution}</summary><div class="inner">
+        <pre class="sql">${esc(SOL[i])}</pre>
+        <button class="btn" data-load="${i}">${T[lang].loadEditor}</button>
+        <div class="takeaway"><b>${T[lang].takeaways}</b><ul>${q.take[lang].map(t => `<li>${t}</li>`).join('')}</ul></div>
+      </div></details>
+    </section>`;
+  });
+  $('#questions').innerHTML = html;
+  $$('[data-load]').forEach(b => b.addEventListener('click', () => {
+    editor.value = SOL[+b.dataset.load];
+    $('.ide').scrollIntoView({behavior:'smooth', block:'start'}); run();
+  }));
+}
+
+function applyLang(l){
+  const prevStarter = T[lang].starter;
+  lang = T[l] ? l : 'pt';
+  document.documentElement.lang = lang;
+  $$('[data-i18n]').forEach(el => { const v = T[lang][el.dataset.i18n]; if (typeof v === 'string') el.textContent = v; });
+  $$('[data-setlang]').forEach(b => b.classList.toggle('on', b.dataset.setlang === lang));
+  if (!editor.value.trim() || editor.value === prevStarter) editor.value = T[lang].starter;
+  if (!$('#results table') && !$('#results .error')) $('#results').innerHTML = `<div class="empty">${T[lang].noResults}</div>`;
+  setStatus(dbReady ? 'ready' : 'loading', dbReady);
+  renderQuestions();
+  try { localStorage.setItem('wk1-lang', lang); } catch(e) {}
+  if (location.hash !== '#' + lang) { try { history.replaceState(null, '', '#' + lang); } catch(e) {} }
+}
+function setStatus(key, ok){ const s = $('#status'); s.textContent = T[lang][key] || key; s.classList.toggle('ok', !!ok); }
+
+function render(res, ms){
+  const box = $('#results'); box.innerHTML = '';
+  $('#timing').textContent = ms != null ? `${ms.toFixed(0)} ms` : '';
+  if (!res.length){ box.innerHTML = `<div class="empty">${T[lang].noRows}</div>`; $('#rowcount').textContent=''; return; }
+  const { columns, values } = res[res.length - 1];
+  const MAX = 500, shown = values.slice(0, MAX);
+  const t = document.createElement('table');
+  const thead = t.createTHead().insertRow();
+  columns.forEach(c => { const th = document.createElement('th'); th.textContent = c; thead.appendChild(th); });
+  const tb = t.createTBody();
+  shown.forEach(r => { const tr = tb.insertRow(); r.forEach(v => { const td = tr.insertCell();
+    if (v === null){ td.textContent = 'NULL'; td.className = 'null'; }
+    else { td.textContent = v; if (typeof v === 'number') td.className = 'num'; } }); });
+  box.appendChild(t);
+  $('#rowcount').textContent = values.length > MAX ? T[lang].shown(MAX, values.length) : T[lang].rows(values.length);
+}
+
+function run(){
+  if (!dbReady) return;
+  const sel = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+  const sql = (sel.trim() ? sel : editor.value);
+  const t0 = performance.now();
+  try { const res = db.exec(sql); render(res, performance.now() - t0); }
+  catch(e){ $('#results').innerHTML = ''; const d = document.createElement('div'); d.className='error'; d.textContent = '⚠ ' + e.message; $('#results').appendChild(d); $('#rowcount').textContent=''; $('#timing').textContent=''; }
+}
+
+$$('[data-quick]').forEach(b => b.addEventListener('click', () => { editor.value = b.dataset.quick; run(); }));
+$$('[data-setlang]').forEach(b => b.addEventListener('click', () => applyLang(b.dataset.setlang)));
+$('#run').addEventListener('click', run);
+$('#reset').addEventListener('click', () => { editor.value = T[lang].starter; $('#results').innerHTML = `<div class="empty">${T[lang].noResults}</div>`; $('#rowcount').textContent=''; $('#timing').textContent=''; });
+editor.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); run(); }
+  else if (e.key === 'Tab'){ e.preventDefault(); const s = editor.selectionStart; editor.setRangeText('  ', s, editor.selectionEnd, 'end'); }
+});
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (T[h] && h !== lang) applyLang(h); });
+
+(function(){
+  let l = location.hash.slice(1);
+  if (!T[l]) { try { l = localStorage.getItem('wk1-lang'); } catch(e) { l = null; } }
+  if (!T[l]) l = (navigator.language || '').toLowerCase().startsWith('pt') ? 'pt' : 'en';
+  applyLang(l);
+})();
+
+(async () => {
+  try {
+    const SQL = await initSqlJs({ locateFile: f => f });
+    const [u, ev] = await Promise.all(['users.csv', 'events.csv'].map(f => fetch(f).then(r => { if (!r.ok) throw new Error(f + ' ' + r.status); return r.text(); })));
+    db = new SQL.Database();
+    db.run(`CREATE TABLE users (user_id INTEGER PRIMARY KEY, first_seen_at TEXT NOT NULL, acquisition_channel TEXT NOT NULL, device TEXT NOT NULL, country TEXT NOT NULL);
+            CREATE TABLE events (event_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(user_id), event_name TEXT NOT NULL, event_at TEXT NOT NULL);`);
+    const load = (table, text, intCols) => {
+      const lines = text.trim().split(/\r?\n/); const n = lines[0].split(',').length;
+      const st = db.prepare(`INSERT INTO ${table} VALUES (${Array(n).fill('?').join(',')})`);
+      db.run('BEGIN');
+      for (let i = 1; i < lines.length; i++){ const v = lines[i].split(','); intCols.forEach(c => v[c] = +v[c]); st.run(v); }
+      db.run('COMMIT'); st.free();
+    };
+    load('users', u, [0]); load('events', ev, [0, 1]);
+    db.run('CREATE INDEX ix_ev_user ON events(user_id, event_name, event_at);');
+    dbReady = true; $('#run').disabled = false; setStatus('ready', true);
+  } catch(e){ setStatus('⚠ ' + e.message); }
+})();
+
+// theme toggle
+(function(){
+  const btn = document.getElementById('theme');
+  const paint = () => { const d = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = d ? '☀' : '☾'; btn.title = d ? 'Light mode' : 'Dark mode'; btn.setAttribute('aria-label', btn.title); };
+  btn.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('sqlpa-theme', next); } catch(e) {}
+    paint();
+  });
+  paint();
+})();
+</script>
+</body>
+</html>
