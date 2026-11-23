@@ -4,44 +4,59 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SQL for Product Analytics · Weekly cases</title>
+<meta name="description" content="Weekly hands-on SQL cases for product analytics. Solve them in your browser, nothing to install.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#f6f5f2;--panel:#fff;--ink:#1d1d1b;--muted:#6b6a65;--line:#e4e2dc;--accent:#1f6f5c;--accent-soft:#e3f0ec;--chip:#efede8}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif}
-  .wrap{max-width:860px;margin:0 auto;padding:40px 20px 60px}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif}
+  .wrap{max-width:1040px;margin:0 auto;padding:36px 20px 60px}
   header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
   .kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
   h1{font-size:34px;line-height:1.15;margin:6px 0 8px;letter-spacing:-.01em}
-  .sub{color:var(--muted);margin:0 0 28px;max-width:640px}
+  .sub{color:var(--muted);margin:0 0 10px;max-width:680px}
+  .how{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 30px;padding:0;list-style:none}
+  .how li{font-size:13px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+  .how b{color:var(--ink);font-weight:600}
   .lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--panel)}
   .lang button{border:0;background:none;padding:7px 14px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
   .lang button.on{background:var(--ink);color:var(--bg)}
-  a.week{display:flex;gap:18px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:12px;color:inherit;text-decoration:none;transition:border-color .15s}
-  a.week:hover{border-color:var(--ink)}
-  .num{font-family:'JetBrains Mono',monospace;font-size:22px;color:var(--accent);background:var(--accent-soft);border-radius:10px;padding:8px 12px;min-width:58px;text-align:center}
-  .week h2{font-size:17px;margin:0 0 2px}
-  .week p{margin:0;color:var(--muted);font-size:14px}
-  .soon{opacity:.55;pointer-events:none}
-  footer{margin-top:32px;color:var(--muted);font-size:12.5px}
+
+  .cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+  .case{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s,box-shadow .15s}
+  a.case:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.08)}
+  a.case:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .case .pic{aspect-ratio:16/9;background:var(--chip);overflow:hidden}
+  .case .pic img{display:block;width:100%;height:100%;object-fit:cover}
+  .case .body{display:flex;flex-direction:column;gap:8px;padding:16px 18px 18px;flex:1}
+  .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:11.5px;border-radius:6px;padding:2px 7px;background:var(--chip);color:var(--muted)}
+  .tag.wk{background:var(--accent-soft);color:var(--accent)}
+  .case h2{font-size:19px;line-height:1.25;margin:2px 0 0}
+  .case p{margin:0;color:var(--muted);font-size:14px}
+  .cta{margin-top:auto;padding-top:6px;font-weight:600;font-size:14px;color:var(--accent)}
+  .case.soon{border-style:dashed;background:transparent}
+  .case.soon .pic{display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,var(--chip) 0 12px,transparent 12px 24px);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:28px}
+  footer{margin-top:36px;color:var(--muted);font-size:12.5px}
   [data-l]{display:none} html[lang="en"] [data-l="en"], html[lang="pt"] [data-l="pt"]{display:revert}
 
   html[data-theme="dark"]{
     --bg:#141516; --panel:#1d1f21; --ink:#e8e6e1; --muted:#9a988f; --line:#2f3235;
-    --accent:#4fb393; --accent-soft:#1c3029; --err:#ff8a80; --code-bg:#0f1011; --code-ink:#e6e6e3; --chip:#2a2c2f;
-    --l1:#5cb87f; --l2:#5b9bd0; --l3:#a983d1; --l4:#e0706b;
+    --accent:#4fb393; --accent-soft:#1c3029; --chip:#2a2c2f;
     color-scheme:dark;
   }
+  html[data-theme="dark"] a.case:hover{box-shadow:0 10px 28px rgba(0,0,0,.4)}
   .theme{border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);width:34px;height:34px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
   .theme:hover{border-color:var(--ink)}
   .controls{display:flex;gap:8px;align-items:center}
+  @media (max-width:520px){ h1{font-size:28px} }
 </style>
 <script>
   (function(){ var t; try { t = localStorage.getItem('sqlpa-theme'); } catch(e) {}
     if (t !== 'dark' && t !== 'light') t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', t); })();
 </script>
-
 </head>
 <body>
 <div class="wrap">
@@ -50,35 +65,51 @@
       <div class="kicker"><span data-l="pt">Série semanal</span><span data-l="en">Weekly series</span></div>
       <h1><span data-l="pt">SQL para Product Analytics</span><span data-l="en">SQL for Product Analytics</span></h1>
     </div>
-    <div class="controls"><button class="theme" id="theme" type="button"></button><div class="lang"><button data-set="pt">PT</button><button data-set="en">EN</button></div></div>
+    <div class="controls"><button class="theme" id="theme" type="button"></button><div class="lang" role="group" aria-label="Language"><button data-set="pt">PT</button><button data-set="en">EN</button></div></div>
   </header>
   <p class="sub">
-    <span data-l="pt">Um case por semana, três perguntas de dificuldade crescente. SQL + decisão de negócio, direto no navegador.</span>
-    <span data-l="en">One case per week, three questions of increasing difficulty. SQL + business decisions, right in your browser.</span>
+    <span data-l="pt">Um case de produto por semana, com 8 perguntas de dificuldade crescente. SQL + decisão de negócio, direto no navegador.</span>
+    <span data-l="en">One product case per week, with 8 questions of increasing difficulty. SQL + business decisions, right in your browser.</span>
   </p>
+  <ul class="how">
+    <li><span data-l="pt"><b>Sem instalar nada</b>, sem criar conta</span><span data-l="en"><b>Nothing to install</b>, no account</span></li>
+    <li><span data-l="pt">Do <b>GROUP BY</b> às <b>funções de janela</b></span><span data-l="en">From <b>GROUP BY</b> to <b>window functions</b></span></li>
+    <li><span data-l="pt">Solução comentada <b>na semana seguinte</b></span><span data-l="en">Solution walkthrough <b>the following week</b></span></li>
+  </ul>
 
-  <a class="week" data-href="week-01/">
-    <div class="num">01</div>
-    <div>
-      <h2><span data-l="pt">O Funil de Cadastro</span><span data-l="en">The Signup Funnel</span></h2>
-      <p><span data-l="pt">Conversão por etapa, qualidade por canal e o efeito de um novo onboarding.</span><span data-l="en">Step conversion, channel quality and the impact of a new onboarding.</span></p>
+  <main class="cases">
+    <a class="case" data-href="week-01/">
+      <div class="pic"><img src="pictures/week-01-trilha-720.webp" width="720" height="405" alt="" data-alt-pt="Trilha, app fictício de idiomas" data-alt-en="Trilha, a fictional language-learning app"></div>
+      <div class="body">
+        <div class="meta"><span class="tag wk"><span data-l="pt">Semana 01</span><span data-l="en">Week 01</span></span><span class="tag"><span data-l="pt">8 perguntas</span><span data-l="en">8 questions</span></span><span class="tag">Trilha</span></div>
+        <h2><span data-l="pt">O Funil de Cadastro</span><span data-l="en">The Signup Funnel</span></h2>
+        <p><span data-l="pt">A Trilha, um app de idiomas, lançou um novo onboarding. Descubra de onde vêm os visitantes, quais canais trazem clientes pagantes e se o novo fluxo funcionou de verdade.</span><span data-l="en">Trilha, a language-learning app, just shipped a new onboarding. Find out where visitors come from, which channels bring paying customers, and whether the new flow actually worked.</span></p>
+        <span class="cta"><span data-l="pt">Começar o case →</span><span data-l="en">Start the case →</span></span>
+      </div>
+    </a>
+
+    <div class="case soon" aria-disabled="true">
+      <div class="pic">02</div>
+      <div class="body">
+        <div class="meta"><span class="tag"><span data-l="pt">Semana 02</span><span data-l="en">Week 02</span></span></div>
+        <h2><span data-l="pt">Em breve</span><span data-l="en">Coming soon</span></h2>
+        <p><span data-l="pt">Um novo case de produto toda semana.</span><span data-l="en">A new product case every week.</span></p>
+      </div>
     </div>
-  </a>
-  <div class="week soon" style="display:flex;gap:18px;align-items:center;background:var(--panel);border:1px dashed var(--line);border-radius:14px;padding:18px 20px">
-    <div class="num">02</div>
-    <div><h2><span data-l="pt">Em breve</span><span data-l="en">Coming soon</span></h2></div>
-  </div>
+  </main>
 
   <footer>
-    <span data-l="pt">Dados sintéticos para fins didáticos.</span><span data-l="en">Synthetic data for teaching purposes.</span>
+    <span data-l="pt">Dados sintéticos para fins didáticos. As empresas dos cases são fictícias.</span><span data-l="en">Synthetic data for teaching purposes. Companies in the cases are fictional.</span>
   </footer>
 </div>
 <script>
   const set = l => {
     document.documentElement.lang = l;
     document.querySelectorAll('[data-set]').forEach(b => b.classList.toggle('on', b.dataset.set === l));
-    document.querySelectorAll('a.week[data-href]').forEach(a => a.href = a.dataset.href + '#' + l);
+    document.querySelectorAll('a.case[data-href]').forEach(a => a.href = a.dataset.href + '#' + l);
+    document.querySelectorAll('img[data-alt-' + l + ']').forEach(i => i.alt = i.dataset['alt' + l[0].toUpperCase() + l[1]]);
     try { localStorage.setItem('wk1-lang', l); } catch(e) {}
+    if (location.hash !== '#' + l) { try { history.replaceState(null, '', '#' + l); } catch(e) {} }
   };
   document.querySelectorAll('[data-set]').forEach(b => b.onclick = () => set(b.dataset.set));
   let l = location.hash.slice(1);

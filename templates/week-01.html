@@ -117,6 +117,17 @@
   .theme{border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);width:34px;height:34px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
   .theme:hover{border-color:var(--ink)}
   .controls{display:flex;gap:8px;align-items:center}
+
+  /* top bar: back to all cases (left) + theme/lang (right) */
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+  .back{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);text-decoration:none;font-size:13px;font-weight:600;padding:7px 14px 7px 11px;transition:border-color .15s}
+  .back:hover{border-color:var(--ink)}
+  .back span[aria-hidden]{font-size:15px;line-height:1}
+  /* hero: title on the left, case banner on the right */
+  header.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);align-items:center;gap:28px}
+  .banner{margin:0;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--panel);aspect-ratio:16/9;box-shadow:0 6px 24px rgba(30,20,80,.08)}
+  .banner img{display:block;width:100%;height:100%;object-fit:cover}
+  @media (max-width:760px){ header.hero{grid-template-columns:1fr;gap:16px} .banner{order:-1} }
 </style>
 <script>
   (function(){ var t; try { t = localStorage.getItem('sqlpa-theme'); } catch(e) {}
@@ -127,16 +138,20 @@
 </head>
 <body>
 <div class="wrap">
-  <header>
+  <nav class="topbar">
+    <a class="back" id="back" href="../"><span aria-hidden="true">←</span><span data-i18n="back"></span></a>
+    <div class="controls"><button class="theme" id="theme" type="button"></button><div class="lang" role="group" aria-label="Language">
+      <button data-setlang="pt">PT</button>
+      <button data-setlang="en">EN</button>
+    </div></div>
+  </nav>
+  <header class="hero">
     <div>
       <div class="kicker"><a href="../" data-i18n="kicker"></a></div>
       <h1 data-i18n="title"></h1>
       <p class="sub" data-i18n="subtitle"></p>
     </div>
-    <div class="controls"><button class="theme" id="theme" type="button"></button><div class="lang" role="group" aria-label="Language">
-      <button data-setlang="pt">PT</button>
-      <button data-setlang="en">EN</button>
-    </div></div>
+    <figure class="banner"><img id="banner" src="../pictures/week-01-trilha.webp" width="1200" height="675" alt=""></figure>
   </header>
 
   <div class="grid">
@@ -310,7 +325,8 @@ const Q = [
 
 const T = {
   en:{
-    kicker:"SQL for Product Analytics · Week 1", title:"The Signup Funnel",
+    kicker:"SQL for Product Analytics · Week 1", title:"The Signup Funnel", back:"All cases",
+    bannerAlt:"Trilha, the fictional language-learning app in this case: \"Learn languages. Go further.\"",
     subtitle:"8 real business questions, from your first GROUP BY to window functions. Write SQL right here in your browser. Nothing to install, no account needed.",
     caseTitle:"The case", period:"Period:", engine:"Engine:", howtoTitle:"How to play",
     schemaTitle:"The data", usersDesc:"· one row per visitor (9,000)", eventsDesc:"· one row per action (~18,000)",
@@ -326,7 +342,8 @@ const T = {
     starter:"-- Welcome! Write your SQL here and press Ctrl/⌘ + Enter.\n-- Try this first, then start with Q1:\n\nSELECT *\nFROM users\nLIMIT 10;"
   },
   pt:{
-    kicker:"SQL para Product Analytics · Semana 1", title:"O Funil de Cadastro",
+    kicker:"SQL para Product Analytics · Semana 1", title:"O Funil de Cadastro", back:"Todos os cases",
+    bannerAlt:"Trilha, o app fictício de idiomas deste case: \"Learn languages. Go further.\"",
     subtitle:"8 perguntas reais de negócio, do primeiro GROUP BY até funções de janela. Escreva SQL aqui mesmo no navegador. Sem instalar nada, sem criar conta.",
     caseTitle:"O case", period:"Período:", engine:"Banco:", howtoTitle:"Como jogar",
     schemaTitle:"Os dados", usersDesc:"· uma linha por visitante (9.000)", eventsDesc:"· uma linha por ação (~18.000)",
@@ -481,6 +498,8 @@ function applyLang(l){
   document.documentElement.lang = lang;
   $$('[data-i18n]').forEach(el => { const v = T[lang][el.dataset.i18n]; if (typeof v === 'string') el.textContent = v; });
   $$('[data-setlang]').forEach(b => b.classList.toggle('on', b.dataset.setlang === lang));
+  $('#banner').alt = T[lang].bannerAlt;
+  $('#back').href = '../#' + lang;
   if (!editor.value.trim() || editor.value === prevStarter) setCode(T[lang].starter);
   if (!$('#results table') && !$('#results .error')) $('#results').innerHTML = `<div class="empty">${T[lang].noResults}</div>`;
   setStatus(dbReady ? 'ready' : 'loading', dbReady);
