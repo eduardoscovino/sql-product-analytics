@@ -68,6 +68,7 @@
   summary:hover{color:var(--ink)}
   details .inner{padding-top:8px;font-size:14px}
   details.sol summary{color:var(--accent)}
+  .locked{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;font-size:13.5px;font-weight:600;color:var(--muted)}
   pre.sql{background:var(--code-bg);color:var(--code-ink);padding:12px 14px;border-radius:8px;overflow:auto;font:12.5px/1.5 'JetBrains Mono',monospace;margin:8px 0}
   .btn{font:inherit;font-size:13px;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--panel);padding:6px 12px;cursor:pointer;color:var(--ink)}
   .btn:hover{border-color:var(--ink)}
@@ -157,12 +158,14 @@
           <ol data-lang-only="en">
             <li>Click <b>users</b> or <b>events</b> above the editor to see what the data looks like.</li>
             <li>Write your query and press <b>Run</b> (or Ctrl/⌘ + Enter).</li>
-            <li>Stuck? Open the <b>hint</b>. Done? Compare with the <b>solution</b>.</li>
+            <li class="sol-on">Stuck? Open the <b>hint</b>. Done? Compare with the <b>solution</b>.</li>
+            <li class="sol-off">Stuck? Open the <b>hint</b>. Solutions come out next week.</li>
           </ol>
           <ol data-lang-only="pt">
             <li>Clique em <b>users</b> ou <b>events</b> acima do editor para ver como são os dados.</li>
             <li>Escreva sua consulta e clique em <b>Executar</b> (ou Ctrl/⌘ + Enter).</li>
-            <li>Travou? Abra a <b>dica</b>. Terminou? Compare com a <b>solução</b>.</li>
+            <li class="sol-on">Travou? Abra a <b>dica</b>. Terminou? Compare com a <b>solução</b>.</li>
+            <li class="sol-off">Travou? Abra a <b>dica</b>. As soluções saem na semana que vem.</li>
           </ol>
         </div>
       </section>
@@ -215,16 +218,8 @@
 
 <script src="sql-wasm.js"></script>
 <script>
-const SOL = [
- "SELECT acquisition_channel,\n       COUNT(*) AS visitors\nFROM users\nGROUP BY acquisition_channel\nORDER BY visitors DESC;",
- "SELECT event_name,\n       COUNT(*)                AS total_events,\n       COUNT(DISTINCT user_id) AS unique_users\nFROM events\nGROUP BY event_name\nORDER BY unique_users DESC;",
- "SELECT u.device,\n       COUNT(DISTINCT u.user_id) AS visitors,\n       COUNT(DISTINCT e.user_id) AS signups,\n       ROUND(100.0 * COUNT(DISTINCT e.user_id) / COUNT(DISTINCT u.user_id), 1) AS signup_rate_pct\nFROM users u\nLEFT JOIN events e\n       ON e.user_id = u.user_id\n      AND e.event_name = 'signup'\nGROUP BY u.device\nORDER BY signup_rate_pct DESC;",
- "SELECT u.acquisition_channel,\n       COUNT(DISTINCT CASE WHEN e.event_name = 'signup'         THEN u.user_id END) AS signups,\n       COUNT(DISTINCT CASE WHEN e.event_name = 'first_purchase' THEN u.user_id END) AS paying_customers,\n       ROUND(100.0\n             * COUNT(DISTINCT CASE WHEN e.event_name = 'first_purchase' THEN u.user_id END)\n             / COUNT(DISTINCT CASE WHEN e.event_name = 'signup'         THEN u.user_id END), 1) AS signup_to_paying_pct\nFROM users u\nJOIN events e ON e.user_id = u.user_id\nGROUP BY u.acquisition_channel\nORDER BY signup_to_paying_pct DESC;",
- "SELECT u.user_id,\n       u.country,\n       u.acquisition_channel,\n       MIN(e.event_at) AS signup_at\nFROM users u\nJOIN events e ON e.user_id = u.user_id\nWHERE e.event_name = 'signup'\n  AND e.event_at >= '2026-11-01'\n  AND u.user_id NOT IN (SELECT user_id\n                        FROM events\n                        WHERE event_name = 'onboarding_complete')\nGROUP BY u.user_id, u.country, u.acquisition_channel\nORDER BY signup_at DESC;",
- "SELECT CASE WHEN s.signup_at < '2026-10-15' THEN '1. before v2' ELSE '2. after v2' END AS period,\n       COUNT(*) AS signups,\n       SUM(CASE WHEN s.user_id IN (SELECT user_id FROM events\n                                   WHERE event_name = 'onboarding_complete')\n                THEN 1 ELSE 0 END) AS completed_onboarding,\n       ROUND(100.0 * SUM(CASE WHEN s.user_id IN (SELECT user_id FROM events\n                                                 WHERE event_name = 'onboarding_complete')\n                              THEN 1 ELSE 0 END) / COUNT(*), 1) AS onboarding_rate_pct\nFROM (SELECT user_id, MIN(event_at) AS signup_at\n      FROM events\n      WHERE event_name = 'signup'\n      GROUP BY user_id) AS s\nWHERE s.signup_at < '2026-11-09'\nGROUP BY period\nORDER BY period;",
- "SELECT purchase_date,\n       new_customers,\n       SUM(new_customers) OVER (ORDER BY purchase_date) AS cumulative_customers\nFROM (SELECT DATE(event_at) AS purchase_date,\n             COUNT(DISTINCT user_id) AS new_customers\n      FROM events\n      WHERE event_name = 'first_purchase'\n      GROUP BY DATE(event_at)) AS daily\nORDER BY purchase_date;",
- "SELECT step,\n       event_name,\n       users,\n       ROUND(100.0 * users / FIRST_VALUE(users) OVER (ORDER BY step), 1) AS pct_of_visitors,\n       ROUND(100.0 * users / LAG(users) OVER (ORDER BY step), 1)        AS pct_of_previous_step\nFROM (SELECT CASE event_name\n               WHEN 'landing_view'        THEN 1\n               WHEN 'signup'              THEN 2\n               WHEN 'onboarding_complete' THEN 3\n               WHEN 'first_purchase'      THEN 4\n             END AS step,\n             event_name,\n             COUNT(DISTINCT user_id) AS users\n      FROM events\n      GROUP BY event_name) AS funnel\nORDER BY step;"
-];
+const SOL = null;  // null until released: python build.py NN --solutions
+document.querySelectorAll(SOL ? '.sol-off' : '.sol-on').forEach(el => el.remove());
 
 const LEVELS = {
   l1:{pt:"Nível 1 · Agregações", en:"Level 1 · Aggregations"},
@@ -241,9 +236,7 @@ const Q = [
   biz:{en:"Marketing presents next quarter's plan tomorrow and needs traffic by channel. Which channel brings the most visitors?",
        pt:"O Marketing apresenta o plano do próximo trimestre amanhã e precisa do tráfego por canal. Qual canal traz mais visitantes?"},
   hint:{en:"Everything is in the <code>users</code> table, and one row = one visitor. Group by channel and count the rows.",
-        pt:"Tudo está na tabela <code>users</code>, e uma linha = um visitante. Agrupe por canal e conte as linhas."},
-  take:{en:["<b>organic</b> leads (3,226), then paid_social (2,455), paid_search (2,265) and referral (1,054).","Keep these numbers in mind: in Q4 you'll see that <i>volume</i> and <i>quality</i> tell very different stories."],
-        pt:["<b>organic</b> lidera (3.226), seguido de paid_social (2.455), paid_search (2.265) e referral (1.054).","Guarde esses números: na P4 você vai ver que <i>volume</i> e <i>qualidade</i> contam histórias bem diferentes."]}},
+        pt:"Tudo está na tabela <code>users</code>, e uma linha = um visitante. Agrupe por canal e conte as linhas."}},
  {lvl:"l1", chips:["COUNT(*)","COUNT(DISTINCT)","GROUP BY"],
   title:{en:"Why don't the numbers match?", pt:"Por que os números não batem?"},
   ask:{en:"For each <code>event_name</code>, show the total number of events and the number of unique users.",
@@ -251,9 +244,7 @@ const Q = [
   biz:{en:"The weekly dashboard shows 2,402 signups, but the CRM team counts fewer new accounts. Who is right?",
        pt:"O dashboard semanal mostra 2.402 cadastros, mas o time de CRM conta menos contas novas. Quem está certo?"},
   hint:{en:"<code>COUNT(*)</code> counts rows. <code>COUNT(DISTINCT user_id)</code> counts people. Put both side by side.",
-        pt:"<code>COUNT(*)</code> conta linhas. <code>COUNT(DISTINCT user_id)</code> conta pessoas. Coloque os dois lado a lado."},
-  take:{en:["<b>signup</b>: 2,402 events but only 2,334 people. About 3% are duplicates from tracking. CRM was right.","<b>landing_view</b>: 14,082 events from 9,000 people. Visitors come back, and that's normal.","Rule of thumb: if the question is about <i>people</i>, count people."],
-        pt:["<b>signup</b>: 2.402 eventos, mas só 2.334 pessoas. Cerca de 3% são duplicatas do tracking. O CRM estava certo.","<b>landing_view</b>: 14.082 eventos de 9.000 pessoas. Visitantes voltam, e isso é normal.","Regra de ouro: se a pergunta é sobre <i>pessoas</i>, conte pessoas."]}},
+        pt:"<code>COUNT(*)</code> conta linhas. <code>COUNT(DISTINCT user_id)</code> conta pessoas. Coloque os dois lado a lado."}},
  {lvl:"l2", chips:["LEFT JOIN","COUNT(DISTINCT)","%"],
   title:{en:"Is mobile the problem?", pt:"O problema é o mobile?"},
   ask:{en:"For each <code>device</code>, show the visitors, how many of them signed up, and the signup rate (%).",
@@ -261,9 +252,7 @@ const Q = [
   biz:{en:"Design wants to spend the next sprint redesigning the mobile landing page because \"mobile converts badly\". Does the data back that up?",
        pt:"O Design quer gastar a próxima sprint redesenhando a landing mobile porque \"o mobile converte mal\". Os dados confirmam?"},
   hint:{en:"Start from <code>users</code> (all visitors) and <code>LEFT JOIN events</code> keeping only signups: put <code>e.event_name = 'signup'</code> in the <code>ON</code>, not in the <code>WHERE</code>. Then <code>COUNT(DISTINCT u.user_id)</code> gives visitors and <code>COUNT(DISTINCT e.user_id)</code> gives signups. Use <code>100.0</code> (not 100) so the division keeps decimals.",
-        pt:"Comece por <code>users</code> (todos os visitantes) e faça <code>LEFT JOIN events</code> só com cadastros: coloque <code>e.event_name = 'signup'</code> no <code>ON</code>, não no <code>WHERE</code>. Aí <code>COUNT(DISTINCT u.user_id)</code> dá os visitantes e <code>COUNT(DISTINCT e.user_id)</code> dá os cadastros. Use <code>100.0</code> (não 100) para a divisão manter as casas decimais."},
-  take:{en:["desktop 26.7% vs mobile 25.5%: only 1.2 p.p. apart.","Mobile isn't the main problem, so a whole sprint there would pay off little. Good analysis also <b>kills weak hypotheses</b> before they cost time.","Try it: move the signup filter to the <code>WHERE</code>. What happens to the visitor count, and why?"],
-        pt:["desktop 26,7% vs mobile 25,5%: só 1,2 p.p. de diferença.","O mobile não é o problema principal, então uma sprint inteira ali traria pouco retorno. Boa análise também <b>derruba hipóteses fracas</b> antes que custem tempo.","Teste: mova o filtro de signup para o <code>WHERE</code>. O que acontece com os visitantes, e por quê?"]}},
+        pt:"Comece por <code>users</code> (todos os visitantes) e faça <code>LEFT JOIN events</code> só com cadastros: coloque <code>e.event_name = 'signup'</code> no <code>ON</code>, não no <code>WHERE</code>. Aí <code>COUNT(DISTINCT u.user_id)</code> dá os visitantes e <code>COUNT(DISTINCT e.user_id)</code> dá os cadastros. Use <code>100.0</code> (não 100) para a divisão manter as casas decimais."}},
  {lvl:"l2", chips:["JOIN","CASE WHEN","COUNT(DISTINCT)"],
   title:{en:"Which channel brings customers who pay?", pt:"Qual canal traz clientes que pagam?"},
   ask:{en:"For each channel, show signups, paying customers (<code>first_purchase</code>) and the % of signups that became paying customers.",
@@ -271,9 +260,7 @@ const Q = [
   biz:{en:"Marketing wants to move budget to <b>paid_social</b> because \"it brings the most signups\". Would you approve?",
        pt:"O Marketing quer mover verba para <b>paid_social</b> porque \"é o canal que mais traz cadastros\". Você aprovaria?"},
   hint:{en:"Join <code>users</code> and <code>events</code>. To count two different things in one query, put a <code>CASE</code> inside the count: <code>COUNT(DISTINCT CASE WHEN e.event_name = 'signup' THEN u.user_id END)</code>. Do the same for <code>first_purchase</code>.",
-        pt:"Junte <code>users</code> e <code>events</code>. Para contar duas coisas diferentes na mesma consulta, coloque um <code>CASE</code> dentro do count: <code>COUNT(DISTINCT CASE WHEN e.event_name = 'signup' THEN u.user_id END)</code>. Faça o mesmo para <code>first_purchase</code>."},
-  take:{en:["<b>paid_social</b> has the most signups (756), but only 3.4% pay: 26 customers.","<b>referral</b>: 23.4% become paying customers, about 7× better.","Don't approve it as framed. Optimize for paying customers, not signups. Caveat: without cost per channel, this ranks <i>quality</i>, not ROI."],
-        pt:["<b>paid_social</b> tem mais cadastros (756), mas só 3,4% pagam: 26 clientes.","<b>referral</b>: 23,4% viram pagantes, cerca de 7× melhor.","Não aprove do jeito que está. Otimize por clientes pagantes, não por cadastros. Ressalva: sem custo por canal, isto mede <i>qualidade</i>, não ROI."]}},
+        pt:"Junte <code>users</code> e <code>events</code>. Para contar duas coisas diferentes na mesma consulta, coloque um <code>CASE</code> dentro do count: <code>COUNT(DISTINCT CASE WHEN e.event_name = 'signup' THEN u.user_id END)</code>. Faça o mesmo para <code>first_purchase</code>."}},
  {lvl:"l3", chips:["WHERE … NOT IN (SELECT …)"],
   title:{en:"Who should get the reminder email?", pt:"Quem deve receber o e-mail de lembrete?"},
   ask:{en:"List the users who signed up in November (from <code>2026-11-01</code>) but <b>never</b> completed onboarding. Show <code>user_id</code>, country, channel and signup date, newest first. How many are there?",
@@ -281,9 +268,7 @@ const Q = [
   biz:{en:"CRM is sending a \"finish setting up your account\" email tomorrow and needs the list.",
        pt:"O CRM vai disparar amanhã um e-mail de \"termine de configurar sua conta\" e precisa da lista."},
   hint:{en:"Filter signups in the <code>WHERE</code>, and exclude whoever appears in a subquery: <code>AND u.user_id NOT IN (SELECT user_id FROM events WHERE event_name = 'onboarding_complete')</code>. The row count of the result answers \"how many\".",
-        pt:"Filtre os cadastros no <code>WHERE</code> e exclua quem aparece numa subconsulta: <code>AND u.user_id NOT IN (SELECT user_id FROM events WHERE event_name = 'onboarding_complete')</code>. A contagem de linhas do resultado responde \"quantos\"."},
-  take:{en:["<b>222 users.</b> Your query just turned into an action.","Before sending: people who signed up in the last day or two may still finish on their own. Consider leaving them out of this send."],
-        pt:["<b>222 usuários.</b> Sua consulta acabou de virar uma ação.","Antes de enviar: quem se cadastrou nos últimos 1–2 dias ainda pode concluir sozinho. Considere deixá-los fora deste disparo."]}},
+        pt:"Filtre os cadastros no <code>WHERE</code> e exclua quem aparece numa subconsulta: <code>AND u.user_id NOT IN (SELECT user_id FROM events WHERE event_name = 'onboarding_complete')</code>. A contagem de linhas do resultado responde \"quantos\"."}},
  {lvl:"l3", chips:["subquery in FROM","IN (SELECT …)","CASE WHEN"],
   title:{en:"Did the new onboarding work?", pt:"O novo onboarding funcionou?"},
   ask:{en:"Compare the % of signups that completed onboarding <b>before</b> and <b>after</b> the v2 launch (2026-10-15). Use each user's first signup date and only signups made before <code>2026-11-09</code>.",
@@ -291,9 +276,7 @@ const Q = [
   biz:{en:"The product team says v2 \"obviously worked\". The CEO wants a number.",
        pt:"O time de produto diz que o v2 \"obviamente funcionou\". O CEO quer um número."},
   hint:{en:"Step 1: a subquery in the <code>FROM</code> with one row per user and their first signup, <code>MIN(event_at)</code>. Step 2: label each row with <code>CASE WHEN signup_at &lt; '2026-10-15' …</code> and check whether the user is <code>IN</code> the list of people who completed onboarding. <b>Why stop at Nov 9?</b> Very recent users haven't had time to finish yet, and including them would unfairly pull the \"after\" number down.",
-        pt:"Passo 1: uma subconsulta no <code>FROM</code> com uma linha por usuário e o primeiro cadastro, <code>MIN(event_at)</code>. Passo 2: rotule cada linha com <code>CASE WHEN signup_at &lt; '2026-10-15' …</code> e verifique se o usuário está <code>IN</code> na lista de quem concluiu o onboarding. <b>Por que parar em 9/nov?</b> Usuários muito recentes ainda não tiveram tempo de concluir, e incluí-los puxaria o número do \"depois\" para baixo injustamente."},
-  take:{en:["Before: 46.2%. After: 58.7%. That's <b>+12.5 p.p.</b>","It's a strong signal, but before/after isn't an A/B test: seasonality and campaigns changed too. An honest line for the CEO: \"onboarding completion rose 12 p.p. after v2, most likely because of it.\""],
-        pt:["Antes: 46,2%. Depois: 58,7%. São <b>+12,5 p.p.</b>","É um sinal forte, mas antes/depois não é teste A/B: sazonalidade e campanhas também mudaram. Uma frase honesta para o CEO: \"a conclusão do onboarding subiu 12 p.p. depois do v2, muito provavelmente por causa dele.\""]}},
+        pt:"Passo 1: uma subconsulta no <code>FROM</code> com uma linha por usuário e o primeiro cadastro, <code>MIN(event_at)</code>. Passo 2: rotule cada linha com <code>CASE WHEN signup_at &lt; '2026-10-15' …</code> e verifique se o usuário está <code>IN</code> na lista de quem concluiu o onboarding. <b>Por que parar em 9/nov?</b> Usuários muito recentes ainda não tiveram tempo de concluir, e incluí-los puxaria o número do \"depois\" para baixo injustamente."}},
  {lvl:"l4", chips:["SUM() OVER (ORDER BY …)","running total"],
   title:{en:"When did we hit the goal?", pt:"Quando batemos a meta?"},
   ask:{en:"Show new paying customers per day and the cumulative total. On which day did we cross <b>200 paying customers</b>?",
@@ -301,9 +284,7 @@ const Q = [
   biz:{en:"The quarter's OKR was \"200 paying customers by October 31\". Did we make it? When?",
        pt:"O OKR do trimestre era \"200 clientes pagantes até 31 de outubro\". Batemos? Quando?"},
   hint:{en:"First count customers per day in a subquery: <code>DATE(event_at)</code> and <code>COUNT(DISTINCT user_id)</code>. On top of it, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> adds up everything up to each day.",
-        pt:"Primeiro conte os clientes por dia numa subconsulta: <code>DATE(event_at)</code> e <code>COUNT(DISTINCT user_id)</code>. Por cima dela, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> soma tudo até cada dia."},
-  take:{en:["We crossed 200 on <b>Oct 28</b> (202 customers). OKR achieved, with 3 days to spare.","September closed at 94; October added 117 more. Running totals are the standard way to track goals on dashboards."],
-        pt:["Passamos de 200 em <b>28/out</b> (202 clientes). OKR batido, com 3 dias de folga.","Setembro fechou em 94; outubro somou mais 117. O acumulado é o jeito padrão de acompanhar metas em dashboards."]}},
+        pt:"Primeiro conte os clientes por dia numa subconsulta: <code>DATE(event_at)</code> e <code>COUNT(DISTINCT user_id)</code>. Por cima dela, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> soma tudo até cada dia."}},
  {lvl:"l4", chips:["LAG()","FIRST_VALUE()","OVER (ORDER BY …)"],
   title:{en:"The funnel slide for the leadership meeting", pt:"O slide do funil para a reunião de liderança"},
   ask:{en:"Build the funnel: unique users at each step, % of all visitors, and % of the previous step.",
@@ -311,9 +292,7 @@ const Q = [
   biz:{en:"This is the slide leadership looks at every month. Where is the biggest leak, and where would you invest first?",
        pt:"Este é o slide que a liderança olha todo mês. Onde está o maior vazamento, e onde você investiria primeiro?"},
   hint:{en:"In a subquery, count unique users per <code>event_name</code> and give each step a number with <code>CASE</code> (landing_view = 1 … first_purchase = 4). Outside it, <code>FIRST_VALUE(users) OVER (ORDER BY step)</code> returns the top of the funnel and <code>LAG(users) OVER (ORDER BY step)</code> returns the previous step.",
-        pt:"Numa subconsulta, conte usuários únicos por <code>event_name</code> e dê um número a cada etapa com <code>CASE</code> (landing_view = 1 … first_purchase = 4). Fora dela, <code>FIRST_VALUE(users) OVER (ORDER BY step)</code> traz o topo do funil e <code>LAG(users) OVER (ORDER BY step)</code> traz a etapa anterior."},
-  take:{en:["Visit → signup 25.9% · signup → onboarding 50.5% · onboarding → purchase 24.9%. In the end, 3.3% of visitors pay.","<b>Half of signups never activate.</b> They already showed interest, so improving onboarding (as v2 started to do, Q6) is usually cheaper than buying more traffic.","Everything you did in Q1–Q7 fits in this one table."],
-        pt:["Visita → cadastro 25,9% · cadastro → onboarding 50,5% · onboarding → compra 24,9%. No fim, 3,3% dos visitantes pagam.","<b>Metade dos cadastros nunca ativa.</b> Essas pessoas já mostraram interesse, então melhorar o onboarding (como o v2 começou a fazer, P6) costuma sair mais barato que comprar mais tráfego.","Tudo o que você fez da P1 à P7 cabe nesta tabela."]}}
+        pt:"Numa subconsulta, conte usuários únicos por <code>event_name</code> e dê um número a cada etapa com <code>CASE</code> (landing_view = 1 … first_purchase = 4). Fora dela, <code>FIRST_VALUE(users) OVER (ORDER BY step)</code> traz o topo do funil e <code>LAG(users) OVER (ORDER BY step)</code> traz a etapa anterior."}}
 ];
 
 const T = {
@@ -324,6 +303,7 @@ const T = {
     schemaTitle:"The data", usersDesc:"· one row per visitor (9,000)", eventsDesc:"· one row per action (~18,000)",
     c_user_id:"Unique visitor id", c_first_seen:"First visit (YYYY-MM-DD HH:MM:SS)", c_event_id:"Unique event id",
     c_fk:"Who did it → users.user_id", c_event_at:"When it happened (YYYY-MM-DD HH:MM:SS)",
+    solLocked:"🔒 Solution & takeaways: released next week.",
     hint:"💡 Hint", solution:"✅ Solution & takeaways", loadEditor:"Open in editor ↗", takeaways:"Takeaways",
     run:"▶ Run", reset:"Reset", loading:"Loading database…", ready:"Database ready", preview:"Peek at the data:",
     noResults:"Run a query to see results here.", noRows:"Query ran successfully: no rows returned.",
@@ -339,6 +319,7 @@ const T = {
     schemaTitle:"Os dados", usersDesc:"· uma linha por visitante (9.000)", eventsDesc:"· uma linha por ação (~18.000)",
     c_user_id:"Id único do visitante", c_first_seen:"Primeira visita (AAAA-MM-DD HH:MM:SS)", c_event_id:"Id único do evento",
     c_fk:"Quem fez → users.user_id", c_event_at:"Quando aconteceu (AAAA-MM-DD HH:MM:SS)",
+    solLocked:"🔒 Solução e conclusões: saem na semana que vem.",
     hint:"💡 Dica", solution:"✅ Solução e conclusões", loadEditor:"Abrir no editor ↗", takeaways:"Conclusões",
     run:"▶ Executar", reset:"Limpar", loading:"Carregando banco…", ready:"Banco pronto", preview:"Espiar os dados:",
     noResults:"Execute uma consulta para ver os resultados aqui.", noRows:"Consulta executada: nenhuma linha retornada.",
@@ -367,11 +348,11 @@ function renderQuestions(){
       <div class="biz"><b>${lang === 'pt' ? 'Contexto' : 'Context'}:</b> ${q.biz[lang]}</div>
       <p>${q.ask[lang]}</p>
       <details data-key="h${n}" ${open.has('h'+n)?'open':''}><summary>${T[lang].hint}</summary><div class="inner">${q.hint[lang]}</div></details>
-      <details class="sol" data-key="s${n}" ${open.has('s'+n)?'open':''}><summary>${T[lang].solution}</summary><div class="inner">
+      ${SOL ? `<details class="sol" data-key="s${n}" ${open.has('s'+n)?'open':''}><summary>${T[lang].solution}</summary><div class="inner">
         <pre class="sql">${esc(SOL[i])}</pre>
         <button class="btn" data-load="${i}">${T[lang].loadEditor}</button>
         <div class="takeaway"><b>${T[lang].takeaways}</b><ul>${q.take[lang].map(t => `<li>${t}</li>`).join('')}</ul></div>
-      </div></details>
+      </div></details>` : `<div class="locked">${T[lang].solLocked}</div>`}
     </section>`;
   });
   $('#questions').innerHTML = html;

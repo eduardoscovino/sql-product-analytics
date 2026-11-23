@@ -68,6 +68,7 @@
   summary:hover{color:var(--ink)}
   details .inner{padding-top:8px;font-size:14px}
   details.sol summary{color:var(--accent)}
+  .locked{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;font-size:13.5px;font-weight:600;color:var(--muted)}
   pre.sql{background:var(--code-bg);color:var(--code-ink);padding:12px 14px;border-radius:8px;overflow:auto;font:12.5px/1.5 'JetBrains Mono',monospace;margin:8px 0}
   .btn{font:inherit;font-size:13px;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--panel);padding:6px 12px;cursor:pointer;color:var(--ink)}
   .btn:hover{border-color:var(--ink)}
@@ -157,12 +158,14 @@
           <ol data-lang-only="en">
             <li>Click <b>users</b> or <b>events</b> above the editor to see what the data looks like.</li>
             <li>Write your query and press <b>Run</b> (or Ctrl/⌘ + Enter).</li>
-            <li>Stuck? Open the <b>hint</b>. Done? Compare with the <b>solution</b>.</li>
+            <li class="sol-on">Stuck? Open the <b>hint</b>. Done? Compare with the <b>solution</b>.</li>
+            <li class="sol-off">Stuck? Open the <b>hint</b>. Solutions come out next week.</li>
           </ol>
           <ol data-lang-only="pt">
             <li>Clique em <b>users</b> ou <b>events</b> acima do editor para ver como são os dados.</li>
             <li>Escreva sua consulta e clique em <b>Executar</b> (ou Ctrl/⌘ + Enter).</li>
-            <li>Travou? Abra a <b>dica</b>. Terminou? Compare com a <b>solução</b>.</li>
+            <li class="sol-on">Travou? Abra a <b>dica</b>. Terminou? Compare com a <b>solução</b>.</li>
+            <li class="sol-off">Travou? Abra a <b>dica</b>. As soluções saem na semana que vem.</li>
           </ol>
         </div>
       </section>
@@ -215,7 +218,8 @@
 
 <script src="sql-wasm.js"></script>
 <script>
-const SOL = __SOLUTIONS__;
+const SOL = __SOLUTIONS__;  // null until released: python build.py NN --solutions
+document.querySelectorAll(SOL ? '.sol-off' : '.sol-on').forEach(el => el.remove());
 
 const LEVELS = {
   l1:{pt:"Nível 1 · Agregações", en:"Level 1 · Aggregations"},
@@ -315,6 +319,7 @@ const T = {
     schemaTitle:"The data", usersDesc:"· one row per visitor (9,000)", eventsDesc:"· one row per action (~18,000)",
     c_user_id:"Unique visitor id", c_first_seen:"First visit (YYYY-MM-DD HH:MM:SS)", c_event_id:"Unique event id",
     c_fk:"Who did it → users.user_id", c_event_at:"When it happened (YYYY-MM-DD HH:MM:SS)",
+    solLocked:"🔒 Solution & takeaways: released next week.",
     hint:"💡 Hint", solution:"✅ Solution & takeaways", loadEditor:"Open in editor ↗", takeaways:"Takeaways",
     run:"▶ Run", reset:"Reset", loading:"Loading database…", ready:"Database ready", preview:"Peek at the data:",
     noResults:"Run a query to see results here.", noRows:"Query ran successfully: no rows returned.",
@@ -330,6 +335,7 @@ const T = {
     schemaTitle:"Os dados", usersDesc:"· uma linha por visitante (9.000)", eventsDesc:"· uma linha por ação (~18.000)",
     c_user_id:"Id único do visitante", c_first_seen:"Primeira visita (AAAA-MM-DD HH:MM:SS)", c_event_id:"Id único do evento",
     c_fk:"Quem fez → users.user_id", c_event_at:"Quando aconteceu (AAAA-MM-DD HH:MM:SS)",
+    solLocked:"🔒 Solução e conclusões: saem na semana que vem.",
     hint:"💡 Dica", solution:"✅ Solução e conclusões", loadEditor:"Abrir no editor ↗", takeaways:"Conclusões",
     run:"▶ Executar", reset:"Limpar", loading:"Carregando banco…", ready:"Banco pronto", preview:"Espiar os dados:",
     noResults:"Execute uma consulta para ver os resultados aqui.", noRows:"Consulta executada: nenhuma linha retornada.",
@@ -358,11 +364,11 @@ function renderQuestions(){
       <div class="biz"><b>${lang === 'pt' ? 'Contexto' : 'Context'}:</b> ${q.biz[lang]}</div>
       <p>${q.ask[lang]}</p>
       <details data-key="h${n}" ${open.has('h'+n)?'open':''}><summary>${T[lang].hint}</summary><div class="inner">${q.hint[lang]}</div></details>
-      <details class="sol" data-key="s${n}" ${open.has('s'+n)?'open':''}><summary>${T[lang].solution}</summary><div class="inner">
+      ${SOL ? `<details class="sol" data-key="s${n}" ${open.has('s'+n)?'open':''}><summary>${T[lang].solution}</summary><div class="inner">
         <pre class="sql">${esc(SOL[i])}</pre>
         <button class="btn" data-load="${i}">${T[lang].loadEditor}</button>
         <div class="takeaway"><b>${T[lang].takeaways}</b><ul>${q.take[lang].map(t => `<li>${t}</li>`).join('')}</ul></div>
-      </div></details>
+      </div></details>` : `<div class="locked">${T[lang].solLocked}</div>`}
     </section>`;
   });
   $('#questions').innerHTML = html;

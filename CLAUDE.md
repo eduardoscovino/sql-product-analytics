@@ -29,7 +29,7 @@ Fictional app "Trilha" (language learning). Tables `users` (9,000 rows) and `eve
 Generator: `generators/week01_signup_funnel.py 5` (seed 5).
 
 ## How pages are built
-`templates/week-NN.html` holds the page (questions/text in the `Q` array, PT+EN). `solutions/week-NN-*.sql` holds the solutions, split by `-- QN ---` markers. `python build.py NN` injects the solutions and writes `docs/week-NN/index.html`. Never edit the docs HTML directly.
+`templates/week-NN.html` holds the page (questions/text in the `Q` array, PT+EN). `solutions/week-NN-*.sql` holds the solutions, split by `-- QN ---` markers. `python build.py NN` writes `docs/week-NN/index.html` with solutions **locked** (hints only; SQL and takeaways are left out of the HTML). The following week, `python build.py NN --solutions` releases them. Never edit the docs HTML directly.
 
 ## Adding a week
 1. New generator in `generators/`, verify the planted signals by running the solutions against the data (python `sqlite3`).
