@@ -104,6 +104,7 @@
   .resmeta{padding:7px 12px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);display:flex;justify-content:space-between}
   .kbd{font-family:'JetBrains Mono',monospace;font-size:11.5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--panel)}
   footer{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
+  footer a{color:inherit}
   [data-lang-only]{display:none}
   html[lang="en"] [data-lang-only="en"], html[lang="pt"] [data-lang-only="pt"]{display:revert}
 
@@ -239,7 +240,7 @@
     <div class="qs" id="questions"></div>
   </div>
 
-  <footer data-i18n="footer"></footer>
+  <footer><span data-i18n="footer"></span> · <span data-i18n="createdBy"></span> <a href="https://www.linkedin.com/in/eduardo-scovino/" target="_blank" rel="noopener">Eduardo Scovino</a></footer>
 </div>
 
 <script src="sql-wasm.js"></script>
@@ -338,7 +339,7 @@ const T = {
     noResults:"Run a query to see results here.", noRows:"Query ran successfully: no rows returned.",
     rows:n=>`${n.toLocaleString('en')} row${n===1?'':'s'}`, shown:(a,b)=>`showing first ${a} of ${b.toLocaleString('en')} rows`,
     privacy:"Everything runs locally in your browser (SQLite compiled to WebAssembly). Your queries never leave this page.",
-    footer:"Synthetic data generated for teaching. Trilha is a fictional company.",
+    footer:"Synthetic data generated for teaching. Trilha is a fictional company.", createdBy:"Created by",
     starter:"-- Welcome! Write your SQL here and press Ctrl/⌘ + Enter.\n-- Try this first, then start with Q1:\n\nSELECT *\nFROM users\nLIMIT 10;"
   },
   pt:{
@@ -355,7 +356,7 @@ const T = {
     noResults:"Execute uma consulta para ver os resultados aqui.", noRows:"Consulta executada: nenhuma linha retornada.",
     rows:n=>`${n.toLocaleString('pt-BR')} linha${n===1?'':'s'}`, shown:(a,b)=>`exibindo as primeiras ${a} de ${b.toLocaleString('pt-BR')} linhas`,
     privacy:"Tudo roda localmente no seu navegador (SQLite compilado para WebAssembly). Suas consultas não saem desta página.",
-    footer:"Dados sintéticos gerados para fins didáticos. A Trilha é uma empresa fictícia.",
+    footer:"Dados sintéticos gerados para fins didáticos. A Trilha é uma empresa fictícia.", createdBy:"Criado por",
     starter:"-- Bem-vindo(a)! Escreva seu SQL aqui e aperte Ctrl/⌘ + Enter.\n-- Teste isto primeiro e depois comece pela P1:\n\nSELECT *\nFROM users\nLIMIT 10;"
   }
 };
