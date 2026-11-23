@@ -39,7 +39,7 @@
   .case.soon{border-style:dashed;background:transparent}
   .case.soon .pic{display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,var(--chip) 0 12px,transparent 12px 24px);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:28px}
   .about{display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:start;margin-top:40px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px}
-  .about .avatar{width:72px;height:72px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;letter-spacing:.02em}
+  .about .avatar{display:block;width:96px;height:96px;border-radius:50%;object-fit:cover;background:var(--accent-soft);border:3px solid var(--panel);box-shadow:0 0 0 1px var(--line)}
   .about h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 4px}
   .about h3{font-size:21px;margin:0 0 8px}
   .about p{margin:0 0 10px;color:var(--muted);max-width:640px}
@@ -113,7 +113,7 @@
   </main>
 
   <section class="about" id="about" aria-labelledby="about-title">
-    <div class="avatar" aria-hidden="true">ES</div>
+    <img class="avatar" src="pictures/eduardo-scovino.webp" width="96" height="96" alt="Eduardo Scovino">
     <div>
       <h2><span data-l="pt">Sobre</span><span data-l="en">About</span></h2>
       <h3 id="about-title">Eduardo Scovino</h3>
