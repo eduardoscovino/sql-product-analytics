@@ -2,11 +2,11 @@
 
 A weekly series of hands-on SQL cases for product analytics. Each week has one business case with 8 questions of increasing difficulty (aggregations → JOINs → subqueries → window functions), written for PMs, POs and junior analysts, and you solve it in an interactive SQL playground that runs entirely in the browser (SQLite compiled to WebAssembly via [sql.js](https://github.com/sql-js/sql.js)). Nothing to install, no account needed.
 
-**▶ Play:** `https://<your-user>.github.io/sql-product-analytics/`
+**▶ Play now:** [eduardoscovino.github.io/sql-product-analytics](https://eduardoscovino.github.io/sql-product-analytics/)
 
-| Week | Theme | Playground |
-|------|-------|------------|
-| 01 | The Signup Funnel: traffic, channel quality, onboarding impact, goal tracking | [`docs/week-01`](docs/week-01/) |
+| Week | Theme | Play | Source |
+|------|-------|------|--------|
+| 01 | The Signup Funnel: traffic, channel quality, onboarding impact, goal tracking | [Open ▶](https://eduardoscovino.github.io/sql-product-analytics/week-01/) | [`docs/week-01`](docs/week-01/) |
 
 ## Repository layout
 
