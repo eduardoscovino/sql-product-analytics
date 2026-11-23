@@ -29,11 +29,11 @@ Fictional app "Trilha" (language learning). Tables `users` (9,000 rows) and `eve
 Generator: `generators/week01_signup_funnel.py 5` (seed 5).
 
 ## How pages are built
-`templates/week-NN.html` holds the page (questions/text in the `Q` array, PT+EN). `solutions/week-NN-*.sql` holds the solutions, split by `-- QN ---` markers. `python build.py NN` injects the solutions and writes `docs/week-NN/index.html`. Never edit the docs HTML directly.
+`templates/week-NN.html` holds the page (questions/text in the `Q` array, PT+EN; no answers). Answers live in `solutions/`, which is **gitignored** (local only, never pushed): `week-NN-<theme>.sql` (split by `-- QN ---` markers) and `week-NN-takeaways.json` (`[{"en":[...],"pt":[...]}, …]`, one per question). `python build.py NN` writes `docs/week-NN/index.html` with solutions **locked** (hints only, no answers in the HTML). The following week, `python build.py NN --solutions` releases them. Never edit the docs HTML directly.
 
 ## Adding a week
 1. New generator in `generators/`, verify the planted signals by running the solutions against the data (python `sqlite3`).
-2. Copy `templates/week-01.html` → `templates/week-NN.html` and edit the case text, the `Q` array and the `CREATE TABLE`/load block. Write `solutions/week-NN-<theme>.sql`. Create `docs/week-NN/` with the CSVs, `sql-wasm.js` and `sql-wasm.wasm`, then run `python build.py NN`.
+2. Copy `templates/week-01.html` → `templates/week-NN.html` and edit the case text, the `Q` array and the `CREATE TABLE`/load block. Write `solutions/week-NN-<theme>.sql` and `solutions/week-NN-takeaways.json`. Create `docs/week-NN/` with the CSVs, `sql-wasm.js` and `sql-wasm.wasm`, then run `python build.py NN`.
 3. Add the week card to `docs/index.html` and to the README table.
 4. Test locally: `cd docs && python -m http.server 8000`.
 
