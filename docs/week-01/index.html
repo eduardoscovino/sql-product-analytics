@@ -218,7 +218,9 @@
 
 <script src="sql-wasm.js"></script>
 <script>
-const SOL = null;  // null until released: python build.py NN --solutions
+// Both null until released (python build.py NN --solutions). Source: solutions/ (gitignored).
+const SOL = null;
+const TAKE = null;
 document.querySelectorAll(SOL ? '.sol-off' : '.sol-on').forEach(el => el.remove());
 
 const LEVELS = {
@@ -351,7 +353,7 @@ function renderQuestions(){
       ${SOL ? `<details class="sol" data-key="s${n}" ${open.has('s'+n)?'open':''}><summary>${T[lang].solution}</summary><div class="inner">
         <pre class="sql">${esc(SOL[i])}</pre>
         <button class="btn" data-load="${i}">${T[lang].loadEditor}</button>
-        <div class="takeaway"><b>${T[lang].takeaways}</b><ul>${q.take[lang].map(t => `<li>${t}</li>`).join('')}</ul></div>
+        <div class="takeaway"><b>${T[lang].takeaways}</b><ul>${TAKE[i][lang].map(t => `<li>${t}</li>`).join('')}</ul></div>
       </div></details>` : `<div class="locked">${T[lang].solLocked}</div>`}
     </section>`;
   });
