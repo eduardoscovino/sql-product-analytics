@@ -14,6 +14,8 @@ A weekly series of hands-on SQL cases for product analytics. Each week has one b
 docs/                  # published by GitHub Pages
   index.html           # series landing page (PT/EN)
   week-01/             # self-contained playground: page + engine + data
+  pictures/            # web-sized case banners (WebP) used by the landing page and each week
+pictures/              # original case artwork (gitignored, local only)
 templates/             # page source per week (case text + questions, PT/EN)
 solutions/             # answers: SQL + takeaways (gitignored, local only until release)
 generators/            # Python scripts that create each week's synthetic data
@@ -24,7 +26,8 @@ build.py               # python build.py 01 -> docs/week-01/index.html (solution
 ## Adding a new week
 1. Write `generators/weekNN_<theme>.py` and run it to produce the CSVs.
 2. Copy `templates/week-01.html` to `templates/week-NN.html`, edit the case and the `Q` array, write `solutions/week-NN-<theme>.sql` and `solutions/week-NN-takeaways.json`, put the CSVs + `sql-wasm.*` in `docs/week-NN/`, and run `python build.py NN`.
-3. Add the week to `docs/index.html` and to the table above.
+3. Put the case banner in `pictures/` and export web versions to `docs/pictures/` (e.g. `magick pictures/X.png -resize 1200x -quality 80 docs/pictures/week-NN-<case>.webp`, plus a 720px one for the card).
+4. Add a case card to `docs/index.html` and the week to the table above.
 
 ## Run locally
 ```bash
