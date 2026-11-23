@@ -38,7 +38,21 @@
   .cta{margin-top:auto;padding-top:6px;font-weight:600;font-size:14px;color:var(--accent)}
   .case.soon{border-style:dashed;background:transparent}
   .case.soon .pic{display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,var(--chip) 0 12px,transparent 12px 24px);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:28px}
+  .about{display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:start;margin-top:40px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .about .avatar{width:72px;height:72px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;letter-spacing:.02em}
+  .about h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 4px}
+  .about h3{font-size:21px;margin:0 0 8px}
+  .about p{margin:0 0 10px;color:var(--muted);max-width:640px}
+  .about .links{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .btn-li{display:inline-flex;align-items:center;gap:8px;background:#0a66c2;color:#fff;text-decoration:none;font-weight:600;font-size:14px;border-radius:999px;padding:9px 16px}
+  .btn-li:hover{background:#004182}
+  .btn-ghost{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:600;font-size:14px;border-radius:999px;padding:8px 16px}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 6px}
+  .navlink:hover{color:var(--ink)}
+  @media (max-width:560px){ .about{grid-template-columns:1fr;padding:20px} }
   footer{margin-top:36px;color:var(--muted);font-size:12.5px}
+  footer a{color:inherit}
   [data-l]{display:none} html[lang="en"] [data-l="en"], html[lang="pt"] [data-l="pt"]{display:revert}
 
   html[data-theme="dark"]{
@@ -65,7 +79,7 @@
       <div class="kicker"><span data-l="pt">Série semanal</span><span data-l="en">Weekly series</span></div>
       <h1><span data-l="pt">SQL para Product Analytics</span><span data-l="en">SQL for Product Analytics</span></h1>
     </div>
-    <div class="controls"><button class="theme" id="theme" type="button"></button><div class="lang" role="group" aria-label="Language"><button data-set="pt">PT</button><button data-set="en">EN</button></div></div>
+    <div class="controls"><a class="navlink" href="#about" data-about-link><span data-l="pt">Sobre</span><span data-l="en">About</span></a><button class="theme" id="theme" type="button"></button><div class="lang" role="group" aria-label="Language"><button data-set="pt">PT</button><button data-set="en">EN</button></div></div>
   </header>
   <p class="sub">
     <span data-l="pt">Um case de produto por semana, com 8 perguntas de dificuldade crescente. SQL + decisão de negócio, direto no navegador.</span>
@@ -98,8 +112,23 @@
     </div>
   </main>
 
+  <section class="about" id="about" aria-labelledby="about-title">
+    <div class="avatar" aria-hidden="true">ES</div>
+    <div>
+      <h2><span data-l="pt">Sobre</span><span data-l="en">About</span></h2>
+      <h3 id="about-title">Eduardo Scovino</h3>
+      <p><span data-l="pt">Eu crio esta série para quem trabalha com produto e quer ganhar autonomia com dados: PMs, POs e analistas em início de carreira. Toda semana publico um case novo no LinkedIn, com as perguntas no post e a solução comentada na semana seguinte.</span><span data-l="en">I put this series together for people who work on product and want to be more self-sufficient with data: PMs, POs and early-career analysts. Every week I post a new case on LinkedIn, with the questions in the post and a solution walkthrough the following week.</span></p>
+      <p><span data-l="pt">Quer trocar uma ideia, sugerir um tema de case ou conversar sobre uma oportunidade? Me chama no LinkedIn.</span><span data-l="en">Want to chat, suggest a case theme or talk about an opportunity? Reach out on LinkedIn.</span></p>
+      <div class="links">
+        <a class="btn-li" href="https://www.linkedin.com/in/eduardo-scovino/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg><span data-l="pt">Conectar no LinkedIn</span><span data-l="en">Connect on LinkedIn</span></a>
+        <a class="btn-ghost" href="https://github.com/eduardoscovino/sql-product-analytics" target="_blank" rel="noopener"><span data-l="pt">Código no GitHub</span><span data-l="en">Source on GitHub</span></a>
+      </div>
+    </div>
+  </section>
+
   <footer>
     <span data-l="pt">Dados sintéticos para fins didáticos. As empresas dos cases são fictícias.</span><span data-l="en">Synthetic data for teaching purposes. Companies in the cases are fictional.</span>
+    · <span data-l="pt">Criado por</span><span data-l="en">Created by</span> <a href="https://www.linkedin.com/in/eduardo-scovino/" target="_blank" rel="noopener">Eduardo Scovino</a>
   </footer>
 </div>
 <script>
@@ -112,6 +141,7 @@
     if (location.hash !== '#' + l) { try { history.replaceState(null, '', '#' + l); } catch(e) {} }
   };
   document.querySelectorAll('[data-set]').forEach(b => b.onclick = () => set(b.dataset.set));
+  document.querySelectorAll('[data-about-link]').forEach(a => a.onclick = e => { e.preventDefault(); document.getElementById('about').scrollIntoView({behavior:'smooth'}); });
   let l = location.hash.slice(1);
   if (!['pt','en'].includes(l)) { try { l = localStorage.getItem('wk1-lang'); } catch(e) {} }
   if (!['pt','en'].includes(l)) l = (navigator.language||'').toLowerCase().startsWith('pt') ? 'pt' : 'en';
