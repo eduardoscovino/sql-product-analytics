@@ -1,2 +1,5 @@
 # Solutions and takeaways stay local until release week (see build.py)
 solutions/
+
+# Original case artwork (full-size, local only; web copies live in docs/pictures/)
+pictures/

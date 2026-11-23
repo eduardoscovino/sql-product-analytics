@@ -15,7 +15,7 @@ docs/                  # published by GitHub Pages
   index.html           # series landing page (PT/EN)
   week-01/             # self-contained playground: page + engine + data
   pictures/            # web-sized case banners (WebP) used by the landing page and each week
-pictures/              # original case artwork (full-size source files)
+pictures/              # original case artwork (gitignored, local only)
 templates/             # page source per week (case text + questions, PT/EN)
 solutions/             # answers: SQL + takeaways (gitignored, local only until release)
 generators/            # Python scripts that create each week's synthetic data

@@ -34,7 +34,7 @@ Generator: `generators/week01_signup_funnel.py 5` (seed 5).
 ## Adding a week
 1. New generator in `generators/`, verify the planted signals by running the solutions against the data (python `sqlite3`).
 2. Copy `templates/week-01.html` → `templates/week-NN.html` and edit the case text, the `Q` array and the `CREATE TABLE`/load block. Write `solutions/week-NN-<theme>.sql` and `solutions/week-NN-takeaways.json`. Create `docs/week-NN/` with the CSVs, `sql-wasm.js` and `sql-wasm.wasm`, then run `python build.py NN`.
-3. Case banner: original in `pictures/`, web copies in `docs/pictures/week-NN-<case>.webp` (1200px, shown next to the title on the week page) and `-720.webp` (landing-page card). Point the `#banner` img in the template at it.
+3. Case banner: original in `pictures/` (gitignored, local only), web copies in `docs/pictures/week-NN-<case>.webp` (1200px, shown next to the title on the week page) and `-720.webp` (landing-page card). Point the `#banner` img in the template at it.
 4. Add the case card (image + short description) to `docs/index.html` and the week to the README table.
 5. Test locally: `cd docs && python -m http.server 8000`.
 
