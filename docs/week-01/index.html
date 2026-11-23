@@ -84,7 +84,15 @@
   .toolbar .status.ok{color:var(--accent)}
   .quick{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg);font-size:12.5px;align-items:center}
   .quick .btn{padding:3px 9px;font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:500}
-  textarea#editor{display:block;width:100%;min-height:300px;resize:vertical;border:0;outline:0;padding:14px 16px;background:var(--code-bg);color:var(--code-ink);font:13px/1.55 'JetBrains Mono',monospace;tab-size:2;white-space:pre}
+  /* Editor = transparent textarea on top of a syntax-highlighted <pre> that mirrors its text */
+  .editor-wrap{position:relative;background:var(--code-bg)}
+  .editor-wrap pre, textarea#editor{margin:0;border:0;padding:14px 16px;font:13px/1.55 'JetBrains Mono',monospace;tab-size:2;white-space:pre;letter-spacing:0;font-variant-ligatures:none}
+  .editor-wrap pre{position:absolute;inset:0;overflow:hidden;pointer-events:none;color:var(--code-ink);padding-right:40px;padding-bottom:40px} /* extra room = textarea scrollbars, keeps scroll in sync */
+  textarea#editor{position:relative;display:block;width:100%;min-height:300px;resize:vertical;outline:0;background:transparent;color:transparent;caret-color:#fff;overflow:auto}
+  textarea#editor::selection{background:rgba(120,170,255,.35)}
+  /* SQL palette (code background is dark in both themes) */
+  .tk-kw{color:#7fb5ff} .tk-fn{color:#e5c07b} .tk-str{color:#98c379} .tk-num{color:#d19a66}
+  .tk-com{color:#7f868f;font-style:italic} .tk-op{color:#56b6c2} .tk-id{color:#e8a0bf} .tk-p{color:#9aa0a6}
   .results{max-height:400px;overflow:auto}
   .results table{border-collapse:collapse;width:100%;font:12.5px/1.4 'JetBrains Mono',monospace}
   .results th{position:sticky;top:0;background:var(--panel);text-align:left;border-bottom:2px solid var(--ink);padding:7px 10px;white-space:nowrap}
@@ -203,7 +211,10 @@
           <button class="btn" data-quick="SELECT * FROM users LIMIT 10;">users</button>
           <button class="btn" data-quick="SELECT * FROM events LIMIT 10;">events</button>
         </div>
-        <textarea id="editor" spellcheck="false" aria-label="SQL editor"></textarea>
+        <div class="editor-wrap">
+          <pre id="hl" aria-hidden="true"></pre>
+          <textarea id="editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="SQL editor"></textarea>
+        </div>
         <div class="results" id="results"></div>
         <div class="resmeta"><span id="rowcount"></span><span id="timing"></span></div>
       </section>
@@ -334,8 +345,108 @@ const T = {
 
 let lang = 'pt', db = null, dbReady = false;
 const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
-const editor = $('#editor');
+const editor = $('#editor'), hl = $('#hl');
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+// ---------- SQL syntax highlighting ----------
+const KW = new Set(('SELECT FROM WHERE AND OR NOT IN IS NULL AS ON JOIN LEFT RIGHT INNER OUTER FULL CROSS NATURAL USING '+
+  'GROUP BY ORDER HAVING LIMIT OFFSET DISTINCT ALL CASE WHEN THEN ELSE END WITH RECURSIVE UNION EXCEPT INTERSECT '+
+  'ASC DESC NULLS FIRST LAST BETWEEN LIKE GLOB ESCAPE EXISTS OVER PARTITION WINDOW FILTER ROWS RANGE GROUPS UNBOUNDED '+
+  'PRECEDING FOLLOWING CURRENT ROW CAST COLLATE INSERT INTO VALUES UPDATE SET DELETE CREATE TEMP TABLE VIEW DROP '+
+  'INDEX IF TRUE FALSE INTEGER TEXT REAL NUMERIC').split(' '));
+const TOKEN = /(--[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|('(?:[^']|'')*'?)|("(?:[^"]|"")*"?|`[^`]*`?)|(\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b)|([A-Za-z_][A-Za-z0-9_]*)|(<>|<=|>=|!=|==|\|\||[-+*\/%<>=])|([(),;.])/gi;
+function highlight(src){
+  let out = '', last = 0, m;
+  TOKEN.lastIndex = 0;
+  while ((m = TOKEN.exec(src))){
+    out += esc(src.slice(last, m.index));
+    const t = esc(m[0]); let c;
+    if (m[1]) c = 'com'; else if (m[2]) c = 'str'; else if (m[3]) c = 'id'; else if (m[4]) c = 'num';
+    else if (m[5]) c = KW.has(m[5].toUpperCase()) ? 'kw' : (/^\s*\(/.test(src.slice(TOKEN.lastIndex)) ? 'fn' : '');
+    else if (m[6]) c = 'op'; else c = 'p';
+    out += c ? `<span class="tk-${c}">${t}</span>` : t;
+    last = TOKEN.lastIndex;
+  }
+  return out + esc(src.slice(last));
+}
+function syncHL(){
+  // trailing newline needs a placeholder so the <pre> keeps the same height as the textarea
+  hl.innerHTML = highlight(editor.value) + (editor.value.endsWith('\n') ? ' ' : '');
+  syncScroll();
+}
+function syncScroll(){ hl.scrollTop = editor.scrollTop; hl.scrollLeft = editor.scrollLeft; }
+function setCode(v){ editor.value = v; editor.scrollTop = editor.scrollLeft = 0; syncHL(); }
+editor.addEventListener('input', syncHL);
+editor.addEventListener('scroll', syncScroll);
+
+// ---------- Editing helpers (keep native undo/redo working via execCommand) ----------
+const IND = '  ';
+function replaceRange(start, end, text){
+  editor.focus();
+  editor.setSelectionRange(start, end);
+  if (!document.execCommand('insertText', false, text)){
+    editor.setRangeText(text, start, end, 'end');
+    editor.dispatchEvent(new Event('input'));
+  }
+  const p = start + text.length; editor.setSelectionRange(p, p);   // browsers disagree on where the caret lands
+}
+const lineStart = (v, i) => v.lastIndexOf('\n', i - 1) + 1;
+// Apply fn to every line touched by the selection, keeping the selection on the same text
+function editLines(fn){
+  const v = editor.value, s = editor.selectionStart, e = editor.selectionEnd;
+  const from = lineStart(v, s);
+  const endPos = (e > s && v[e - 1] === '\n') ? e - 1 : e;   // a selection ending at column 0 excludes that line
+  let to = v.indexOf('\n', endPos); if (to < 0) to = v.length;
+  const lines = v.slice(from, to).split('\n'), changed = lines.map(fn);
+  const block = changed.join('\n');
+  if (block === lines.join('\n')) return;
+  const d0 = changed[0].length - lines[0].length;
+  replaceRange(from, to, block);
+  const ns = Math.max(from, s + d0), ne = Math.max(ns, e + block.length - (to - from));
+  editor.setSelectionRange(ns, s === e ? ns : ne);
+}
+const indentLine = l => IND + l;
+const outdentLine = l => l.replace(/^( {1,2}|\t)/, '');
+
+editor.addEventListener('keydown', e => {
+  const v = editor.value, s = editor.selectionStart, en = editor.selectionEnd, mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key === 'Enter'){ e.preventDefault(); run(); return; }
+  if (e.key === 'Escape'){ editor.blur(); return; }                       // lets keyboard users leave the editor
+  if (mod && e.key === '/'){                                               // toggle -- comment
+    e.preventDefault();
+    const sel = v.slice(lineStart(v, s), Math.max(en, s));
+    const lines = sel.split('\n').filter(l => l.trim());
+    const allCommented = lines.length && lines.every(l => /^\s*--/.test(l));
+    editLines(l => !l.trim() ? l : allCommented ? l.replace(/^(\s*)-- ?/, '$1') : l.replace(/^(\s*)/, '$1-- '));
+    return;
+  }
+  if (e.key === 'Tab' && !mod && !e.altKey){
+    e.preventDefault();
+    if (e.shiftKey) editLines(outdentLine);
+    else if (v.slice(s, en).includes('\n')) editLines(indentLine);
+    else { const col = s - lineStart(v, s); replaceRange(s, en, ' '.repeat(IND.length - (col % IND.length))); }
+    return;
+  }
+  if (e.key === 'Enter' && !mod && !e.shiftKey && !e.altKey && !e.isComposing){
+    e.preventDefault();
+    const ls = lineStart(v, s), cur = v.slice(ls, s);
+    const indent = cur.match(/^\s*/)[0];
+    const opens = /\(\s*$/.test(cur);
+    if (opens && v[en] === ')'){                                           // (|)  →  (\n  |\n)
+      replaceRange(s, en, '\n' + indent + IND + '\n' + indent);
+      const p = s + 1 + indent.length + IND.length; editor.setSelectionRange(p, p);
+    } else replaceRange(s, en, '\n' + indent + (opens ? IND : ''));
+    return;
+  }
+  if (e.key === 'Backspace' && s === en && s > 0 && !mod && !e.altKey){
+    const before = v.slice(lineStart(v, s), s);
+    if (before.length && /^ +$/.test(before)){                             // delete back to previous indent stop
+      e.preventDefault();
+      const n = before.length % IND.length || IND.length;
+      replaceRange(s - n, s, '');
+    }
+  }
+});
 
 function renderQuestions(){
   const open = new Set([...$$('#questions details[open]')].map(d => d.dataset.key));
@@ -351,7 +462,7 @@ function renderQuestions(){
       <p>${q.ask[lang]}</p>
       <details data-key="h${n}" ${open.has('h'+n)?'open':''}><summary>${T[lang].hint}</summary><div class="inner">${q.hint[lang]}</div></details>
       ${SOL ? `<details class="sol" data-key="s${n}" ${open.has('s'+n)?'open':''}><summary>${T[lang].solution}</summary><div class="inner">
-        <pre class="sql">${esc(SOL[i])}</pre>
+        <pre class="sql">${highlight(SOL[i])}</pre>
         <button class="btn" data-load="${i}">${T[lang].loadEditor}</button>
         <div class="takeaway"><b>${T[lang].takeaways}</b><ul>${TAKE[i][lang].map(t => `<li>${t}</li>`).join('')}</ul></div>
       </div></details>` : `<div class="locked">${T[lang].solLocked}</div>`}
@@ -359,7 +470,7 @@ function renderQuestions(){
   });
   $('#questions').innerHTML = html;
   $$('[data-load]').forEach(b => b.addEventListener('click', () => {
-    editor.value = SOL[+b.dataset.load];
+    setCode(SOL[+b.dataset.load]);
     $('.ide').scrollIntoView({behavior:'smooth', block:'start'}); run();
   }));
 }
@@ -370,7 +481,7 @@ function applyLang(l){
   document.documentElement.lang = lang;
   $$('[data-i18n]').forEach(el => { const v = T[lang][el.dataset.i18n]; if (typeof v === 'string') el.textContent = v; });
   $$('[data-setlang]').forEach(b => b.classList.toggle('on', b.dataset.setlang === lang));
-  if (!editor.value.trim() || editor.value === prevStarter) editor.value = T[lang].starter;
+  if (!editor.value.trim() || editor.value === prevStarter) setCode(T[lang].starter);
   if (!$('#results table') && !$('#results .error')) $('#results').innerHTML = `<div class="empty">${T[lang].noResults}</div>`;
   setStatus(dbReady ? 'ready' : 'loading', dbReady);
   renderQuestions();
@@ -405,14 +516,10 @@ function run(){
   catch(e){ $('#results').innerHTML = ''; const d = document.createElement('div'); d.className='error'; d.textContent = '⚠ ' + e.message; $('#results').appendChild(d); $('#rowcount').textContent=''; $('#timing').textContent=''; }
 }
 
-$$('[data-quick]').forEach(b => b.addEventListener('click', () => { editor.value = b.dataset.quick; run(); }));
+$$('[data-quick]').forEach(b => b.addEventListener('click', () => { setCode(b.dataset.quick); run(); }));
 $$('[data-setlang]').forEach(b => b.addEventListener('click', () => applyLang(b.dataset.setlang)));
 $('#run').addEventListener('click', run);
-$('#reset').addEventListener('click', () => { editor.value = T[lang].starter; $('#results').innerHTML = `<div class="empty">${T[lang].noResults}</div>`; $('#rowcount').textContent=''; $('#timing').textContent=''; });
-editor.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); run(); }
-  else if (e.key === 'Tab'){ e.preventDefault(); const s = editor.selectionStart; editor.setRangeText('  ', s, editor.selectionEnd, 'end'); }
-});
+$('#reset').addEventListener('click', () => { setCode(T[lang].starter); $('#results').innerHTML = `<div class="empty">${T[lang].noResults}</div>`; $('#rowcount').textContent=''; $('#timing').textContent=''; });
 window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (T[h] && h !== lang) applyLang(h); });
 
 (function(){
