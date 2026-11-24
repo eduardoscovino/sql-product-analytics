@@ -1,6 +1,6 @@
 # SQL for Product Analytics
 
-A weekly series of hands-on SQL cases for product analytics. Each week has one business case with 8 questions of increasing difficulty (aggregations → JOINs → subqueries → window functions), written for PMs, POs and junior analysts, and you solve it in an interactive SQL playground that runs entirely in the browser (SQLite compiled to WebAssembly via [sql.js](https://github.com/sql-js/sql.js)). Nothing to install, no account needed.
+A weekly series of hands-on SQL cases for product analytics. Each week has one business case with 8 questions of increasing difficulty (aggregations → JOINs → subqueries → window functions), written for PMs, POs and junior analysts, and you solve it in an interactive SQL playground that runs entirely in the browser ([DuckDB](https://duckdb.org) compiled to WebAssembly, with PostgreSQL-style SQL close to Snowflake, BigQuery and Databricks). Nothing to install, no account needed.
 
 **▶ Play now:** [eduardoscovino.github.io/sql-product-analytics](https://eduardoscovino.github.io/sql-product-analytics/)
 
@@ -25,7 +25,7 @@ build.py               # python build.py 01 -> docs/week-01/index.html (solution
 
 ## Adding a new week
 1. Write `generators/weekNN_<theme>.py` and run it to produce the CSVs.
-2. Copy `templates/week-01.html` to `templates/week-NN.html`, edit the case and the `Q` array, write `solutions/week-NN-<theme>.sql` and `solutions/week-NN-takeaways.json`, put the CSVs + `sql-wasm.*` in `docs/week-NN/`, and run `python build.py NN`.
+2. Copy `templates/week-01.html` to `templates/week-NN.html`, edit the case and the `Q` array, write `solutions/week-NN-<theme>.sql` and `solutions/week-NN-takeaways.json`, put the CSVs in `docs/week-NN/`, and run `python build.py NN`.
 3. Put the case banner in `pictures/` and export web versions to `docs/pictures/` (e.g. `magick pictures/X.png -resize 1200x -quality 80 docs/pictures/week-NN-<case>.webp`, plus a 720px one for the card).
 4. Add a case card to `docs/index.html` and the week to the table above.
 
