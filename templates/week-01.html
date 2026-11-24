@@ -175,7 +175,7 @@
         </div>
         <div class="meta">
           <span><span data-i18n="period"></span> <b>2026-09-01 → 2026-11-15</b></span>
-          <span><span data-i18n="engine"></span> <b>SQLite</b></span>
+          <span><span data-i18n="engine"></span> <b>DuckDB</b></span>
         </div>
         <div class="howto">
           <b data-i18n="howtoTitle"></b>
@@ -199,17 +199,17 @@
         <table class="schema">
           <caption>users <span style="color:var(--muted);font-weight:400" data-i18n="usersDesc"></span></caption>
           <tr><td>user_id</td><td>INTEGER</td><td data-i18n="c_user_id"></td></tr>
-          <tr><td>first_seen_at</td><td>TEXT</td><td data-i18n="c_first_seen"></td></tr>
-          <tr><td>acquisition_channel</td><td>TEXT</td><td>organic · paid_search · paid_social · referral</td></tr>
-          <tr><td>device</td><td>TEXT</td><td>mobile · desktop</td></tr>
-          <tr><td>country</td><td>TEXT</td><td>BR · MX · AR · CO · CL</td></tr>
+          <tr><td>first_seen_at</td><td>TIMESTAMP</td><td data-i18n="c_first_seen"></td></tr>
+          <tr><td>acquisition_channel</td><td>VARCHAR</td><td>organic · paid_search · paid_social · referral</td></tr>
+          <tr><td>device</td><td>VARCHAR</td><td>mobile · desktop</td></tr>
+          <tr><td>country</td><td>VARCHAR</td><td>BR · MX · AR · CO · CL</td></tr>
         </table>
         <table class="schema">
           <caption>events <span style="color:var(--muted);font-weight:400" data-i18n="eventsDesc"></span></caption>
           <tr><td>event_id</td><td>INTEGER</td><td data-i18n="c_event_id"></td></tr>
           <tr><td>user_id</td><td>INTEGER</td><td data-i18n="c_fk"></td></tr>
-          <tr><td>event_name</td><td>TEXT</td><td>landing_view · signup · onboarding_complete · first_purchase</td></tr>
-          <tr><td>event_at</td><td>TEXT</td><td data-i18n="c_event_at"></td></tr>
+          <tr><td>event_name</td><td>VARCHAR</td><td>landing_view · signup · onboarding_complete · first_purchase</td></tr>
+          <tr><td>event_at</td><td>TIMESTAMP</td><td data-i18n="c_event_at"></td></tr>
         </table>
       </section>
     </div>
@@ -243,7 +243,6 @@
   <footer><span data-i18n="footer"></span> · <span data-i18n="createdBy"></span> <a href="https://www.linkedin.com/in/eduardo-scovino/" target="_blank" rel="noopener">Eduardo Scovino</a></footer>
 </div>
 
-<script src="sql-wasm.js"></script>
 <script>
 // Both null until released (python build.py NN --solutions). Source: solutions/ (gitignored).
 const SOL = __SOLUTIONS__;
@@ -280,8 +279,8 @@ const Q = [
        pt:"Para cada <code>device</code>, mostre os visitantes, quantos deles se cadastraram e a taxa de cadastro (%)."},
   biz:{en:"Design wants to spend the next sprint redesigning the mobile landing page because \"mobile converts badly\". Does the data back that up?",
        pt:"O Design quer gastar a próxima sprint redesenhando a landing mobile porque \"o mobile converte mal\". Os dados confirmam?"},
-  hint:{en:"Start from <code>users</code> (all visitors) and <code>LEFT JOIN events</code> keeping only signups: put <code>e.event_name = 'signup'</code> in the <code>ON</code>, not in the <code>WHERE</code>. Then <code>COUNT(DISTINCT u.user_id)</code> gives visitors and <code>COUNT(DISTINCT e.user_id)</code> gives signups. Use <code>100.0</code> (not 100) so the division keeps decimals.",
-        pt:"Comece por <code>users</code> (todos os visitantes) e faça <code>LEFT JOIN events</code> só com cadastros: coloque <code>e.event_name = 'signup'</code> no <code>ON</code>, não no <code>WHERE</code>. Aí <code>COUNT(DISTINCT u.user_id)</code> dá os visitantes e <code>COUNT(DISTINCT e.user_id)</code> dá os cadastros. Use <code>100.0</code> (não 100) para a divisão manter as casas decimais."}},
+  hint:{en:"Start from <code>users</code> (all visitors) and <code>LEFT JOIN events</code> keeping only signups: put <code>e.event_name = 'signup'</code> in the <code>ON</code>, not in the <code>WHERE</code>. Then <code>COUNT(DISTINCT u.user_id)</code> gives visitors and <code>COUNT(DISTINCT e.user_id)</code> gives signups. Multiply by <code>100.0</code> to turn it into a percentage.",
+        pt:"Comece por <code>users</code> (todos os visitantes) e faça <code>LEFT JOIN events</code> só com cadastros: coloque <code>e.event_name = 'signup'</code> no <code>ON</code>, não no <code>WHERE</code>. Aí <code>COUNT(DISTINCT u.user_id)</code> dá os visitantes e <code>COUNT(DISTINCT e.user_id)</code> dá os cadastros. Multiplique por <code>100.0</code> para virar porcentagem."}},
  {lvl:"l2", chips:["JOIN","CASE WHEN","COUNT(DISTINCT)"],
   title:{en:"Which channel brings customers who pay?", pt:"Qual canal traz clientes que pagam?"},
   ask:{en:"For each channel, show signups, paying customers (<code>first_purchase</code>) and the % of signups that became paying customers.",
@@ -312,8 +311,8 @@ const Q = [
        pt:"Mostre os novos clientes pagantes por dia e o total acumulado. Em que dia passamos de <b>200 clientes pagantes</b>?"},
   biz:{en:"The quarter's OKR was \"200 paying customers by October 31\". Did we make it? When?",
        pt:"O OKR do trimestre era \"200 clientes pagantes até 31 de outubro\". Batemos? Quando?"},
-  hint:{en:"First count customers per day in a subquery: <code>DATE(event_at)</code> and <code>COUNT(DISTINCT user_id)</code>. On top of it, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> adds up everything up to each day.",
-        pt:"Primeiro conte os clientes por dia numa subconsulta: <code>DATE(event_at)</code> e <code>COUNT(DISTINCT user_id)</code>. Por cima dela, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> soma tudo até cada dia."}},
+  hint:{en:"First count customers per day in a subquery: <code>CAST(event_at AS DATE)</code> and <code>COUNT(DISTINCT user_id)</code>. On top of it, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> adds up everything up to each day.",
+        pt:"Primeiro conte os clientes por dia numa subconsulta: <code>CAST(event_at AS DATE)</code> e <code>COUNT(DISTINCT user_id)</code>. Por cima dela, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> soma tudo até cada dia."}},
  {lvl:"l4", chips:["LAG()","FIRST_VALUE()","OVER (ORDER BY …)"],
   title:{en:"The funnel slide for the leadership meeting", pt:"O slide do funil para a reunião de liderança"},
   ask:{en:"Build the funnel: unique users at each step, % of all visitors, and % of the previous step.",
@@ -338,7 +337,7 @@ const T = {
     run:"▶ Run", reset:"Reset", loading:"Loading database…", ready:"Database ready", preview:"Peek at the data:",
     noResults:"Run a query to see results here.", noRows:"Query ran successfully: no rows returned.",
     rows:n=>`${n.toLocaleString('en')} row${n===1?'':'s'}`, shown:(a,b)=>`showing first ${a} of ${b.toLocaleString('en')} rows`,
-    privacy:"Everything runs locally in your browser (SQLite compiled to WebAssembly). Your queries never leave this page.",
+    privacy:"Everything runs locally in your browser (DuckDB compiled to WebAssembly). Your queries never leave this page.",
     footer:"Synthetic data generated for teaching. Trilha is a fictional company.", createdBy:"Created by",
     starter:"-- Welcome! Write your SQL here and press Ctrl/⌘ + Enter.\n-- Try this first, then start with Q1:\n\nSELECT *\nFROM users\nLIMIT 10;"
   },
@@ -355,13 +354,13 @@ const T = {
     run:"▶ Executar", reset:"Limpar", loading:"Carregando banco…", ready:"Banco pronto", preview:"Espiar os dados:",
     noResults:"Execute uma consulta para ver os resultados aqui.", noRows:"Consulta executada: nenhuma linha retornada.",
     rows:n=>`${n.toLocaleString('pt-BR')} linha${n===1?'':'s'}`, shown:(a,b)=>`exibindo as primeiras ${a} de ${b.toLocaleString('pt-BR')} linhas`,
-    privacy:"Tudo roda localmente no seu navegador (SQLite compilado para WebAssembly). Suas consultas não saem desta página.",
+    privacy:"Tudo roda localmente no seu navegador (DuckDB compilado para WebAssembly). Suas consultas não saem desta página.",
     footer:"Dados sintéticos gerados para fins didáticos. A Trilha é uma empresa fictícia.", createdBy:"Criado por",
     starter:"-- Bem-vindo(a)! Escreva seu SQL aqui e aperte Ctrl/⌘ + Enter.\n-- Teste isto primeiro e depois comece pela P1:\n\nSELECT *\nFROM users\nLIMIT 10;"
   }
 };
 
-let lang = 'pt', db = null, dbReady = false;
+let lang = 'pt', db = null, dbReady = false, loadPct = null;
 const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
 const editor = $('#editor'), hl = $('#hl');
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -371,7 +370,7 @@ const KW = new Set(('SELECT FROM WHERE AND OR NOT IN IS NULL AS ON JOIN LEFT RIG
   'GROUP BY ORDER HAVING LIMIT OFFSET DISTINCT ALL CASE WHEN THEN ELSE END WITH RECURSIVE UNION EXCEPT INTERSECT '+
   'ASC DESC NULLS FIRST LAST BETWEEN LIKE GLOB ESCAPE EXISTS OVER PARTITION WINDOW FILTER ROWS RANGE GROUPS UNBOUNDED '+
   'PRECEDING FOLLOWING CURRENT ROW CAST COLLATE INSERT INTO VALUES UPDATE SET DELETE CREATE TEMP TABLE VIEW DROP '+
-  'INDEX IF TRUE FALSE INTEGER TEXT REAL NUMERIC').split(' '));
+  'INDEX IF TRUE FALSE INTEGER TEXT REAL NUMERIC QUALIFY ILIKE INTERVAL EXCLUDE DATE TIMESTAMP VARCHAR BIGINT DOUBLE DECIMAL BOOLEAN').split(' '));
 const TOKEN = /(--[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|('(?:[^']|'')*'?)|("(?:[^"]|"")*"?|`[^`]*`?)|(\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b)|([A-Za-z_][A-Za-z0-9_]*)|(<>|<=|>=|!=|==|\|\||[-+*\/%<>=])|([(),;.])/gi;
 function highlight(src){
   let out = '', last = 0, m;
@@ -508,13 +507,16 @@ function applyLang(l){
   try { localStorage.setItem('wk1-lang', lang); } catch(e) {}
   if (location.hash !== '#' + lang) { try { history.replaceState(null, '', '#' + lang); } catch(e) {} }
 }
-function setStatus(key, ok){ const s = $('#status'); s.textContent = T[lang][key] || key; s.classList.toggle('ok', !!ok); }
+function setStatus(key, ok){ const s = $('#status'); s.textContent = (key === 'loading' && loadPct != null) ? `${T[lang].loading} ${loadPct}%` : (T[lang][key] || key); s.classList.toggle('ok', !!ok); }
 
 function render(res, ms){
   const box = $('#results'); box.innerHTML = '';
   $('#timing').textContent = ms != null ? `${ms.toFixed(0)} ms` : '';
-  if (!res.length){ box.innerHTML = `<div class="empty">${T[lang].noRows}</div>`; $('#rowcount').textContent=''; return; }
-  const { columns, values } = res[res.length - 1];
+  if (!res || !res.numCols){ box.innerHTML = `<div class="empty">${T[lang].noRows}</div>`; $('#rowcount').textContent=''; return; }
+  const fields = res.schema.fields, cols = fields.map((f, c) => res.getChildAt(c));
+  const columns = fields.map(f => f.name);
+  const values = [];
+  for (let r = 0; r < res.numRows; r++) values.push(cols.map((v, c) => cell(v.get(r), fields[c].type)));
   const MAX = 500, shown = values.slice(0, MAX);
   const t = document.createElement('table');
   const thead = t.createTHead().insertRow();
@@ -522,18 +524,58 @@ function render(res, ms){
   const tb = t.createTBody();
   shown.forEach(r => { const tr = tb.insertRow(); r.forEach(v => { const td = tr.insertCell();
     if (v === null){ td.textContent = 'NULL'; td.className = 'null'; }
-    else { td.textContent = v; if (typeof v === 'number') td.className = 'num'; } }); });
+    else { td.textContent = v.text; if (v.num) td.className = 'num'; } }); });
   box.appendChild(t);
   $('#rowcount').textContent = values.length > MAX ? T[lang].shown(MAX, values.length) : T[lang].rows(values.length);
 }
 
-function run(){
-  if (!dbReady) return;
+// Arrow value -> {text, num}. DuckDB returns BIGINT as BigInt, DECIMAL/HUGEINT as 32-bit words,
+// TIMESTAMP/DATE as epoch milliseconds (or Date), so format them the way a SQL client would.
+const pad = n => String(n).padStart(2, '0');
+function fmtTs(ms, withTime){
+  const d = new Date(Number(ms)); if (isNaN(d)) return String(ms);
+  const day = `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
+  return withTime ? `${day} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}` : day;
+}
+function decToStr(words, scale){
+  let n = 0n; for (let i = words.length - 1; i >= 0; i--) n = (n << 32n) + BigInt(words[i] >>> 0);
+  if (words[words.length - 1] & 0x80000000) n -= 1n << BigInt(words.length * 32);
+  const neg = n < 0n; let t = (neg ? -n : n).toString();
+  if (scale > 0){ t = t.padStart(scale + 1, '0'); t = t.slice(0, -scale) + '.' + t.slice(-scale); }
+  return (neg ? '-' : '') + t;
+}
+function cell(v, type){
+  if (v === null || v === undefined) return null;
+  const kind = String(type);
+  if (/^Timestamp/i.test(kind)) return {text: fmtTs(v instanceof Date ? v.getTime() : v, true)};
+  if (/^Date/i.test(kind)) return {text: fmtTs(v instanceof Date ? v.getTime() : v, false)};
+  if (/^Decimal/i.test(kind) && typeof v === 'object') return {text: decToStr(v, type.scale || 0), num: true};
+  if (typeof v === 'bigint') return {text: v.toString(), num: true};
+  if (typeof v === 'number') return {text: String(v), num: true};
+  if (typeof v === 'boolean') return {text: String(v)};
+  if (typeof v === 'object') return {text: JSON.stringify(v.toJSON ? v.toJSON() : v, (k, x) => typeof x === 'bigint' ? x.toString() : x)};
+  return {text: String(v)};
+}
+
+// Split on top-level ';' (ignoring ones inside strings/comments) so several statements run in order
+// and the last one's result is shown, like a SQL client does.
+function splitStatements(src){
+  const out = []; let start = 0, m; TOKEN.lastIndex = 0;
+  while ((m = TOKEN.exec(src))) if (m[0] === ';'){ out.push(src.slice(start, m.index)); start = TOKEN.lastIndex; }
+  out.push(src.slice(start));
+  return out.filter(q => q.replace(/--[^\n]*|\/\*[\s\S]*?(\*\/|$)/g, '').trim());
+}
+
+let running = false;
+async function run(){
+  if (!dbReady || running) return;
   const sel = editor.value.substring(editor.selectionStart, editor.selectionEnd);
   const sql = (sel.trim() ? sel : editor.value);
   const t0 = performance.now();
-  try { const res = db.exec(sql); render(res, performance.now() - t0); }
+  running = true; $('#run').disabled = true;
+  try { let res = null; for (const q of splitStatements(sql)) res = await db.query(q); render(res, performance.now() - t0); }
   catch(e){ $('#results').innerHTML = ''; const d = document.createElement('div'); d.className='error'; d.textContent = '⚠ ' + e.message; $('#results').appendChild(d); $('#rowcount').textContent=''; $('#timing').textContent=''; }
+  finally { running = false; $('#run').disabled = false; }
 }
 
 $$('[data-quick]').forEach(b => b.addEventListener('click', () => { setCode(b.dataset.quick); run(); }));
@@ -549,24 +591,31 @@ window.addEventListener('hashchange', () => { const h = location.hash.slice(1); 
   applyLang(l);
 })();
 
+// ---------- DuckDB (WebAssembly, loaded from jsDelivr; version pinned) ----------
+const DUCKDB = 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0';
 (async () => {
   try {
-    const SQL = await initSqlJs({ locateFile: f => f });
-    const [u, ev] = await Promise.all(['users.csv', 'events.csv'].map(f => fetch(f).then(r => { if (!r.ok) throw new Error(f + ' ' + r.status); return r.text(); })));
-    db = new SQL.Database();
-    db.run(`CREATE TABLE users (user_id INTEGER PRIMARY KEY, first_seen_at TEXT NOT NULL, acquisition_channel TEXT NOT NULL, device TEXT NOT NULL, country TEXT NOT NULL);
-            CREATE TABLE events (event_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(user_id), event_name TEXT NOT NULL, event_at TEXT NOT NULL);`);
-    const load = (table, text, intCols) => {
-      const lines = text.trim().split(/\r?\n/); const n = lines[0].split(',').length;
-      const st = db.prepare(`INSERT INTO ${table} VALUES (${Array(n).fill('?').join(',')})`);
-      db.run('BEGIN');
-      for (let i = 1; i < lines.length; i++){ const v = lines[i].split(','); intCols.forEach(c => v[c] = +v[c]); st.run(v); }
-      db.run('COMMIT'); st.free();
-    };
-    load('users', u, [0]); load('events', ev, [0, 1]);
-    db.run('CREATE INDEX ix_ev_user ON events(user_id, event_name, event_at);');
+    const csvs = Promise.all(['users.csv', 'events.csv'].map(f => fetch(f).then(r => { if (!r.ok) throw new Error(f + ' ' + r.status); return r.text(); })));
+    const duckdb = await import(DUCKDB + '/+esm');
+    const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
+    // a worker can't be started straight from another origin, so wrap the CDN script in a local blob
+    const workerUrl = URL.createObjectURL(new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'}));
+    const ddb = new duckdb.AsyncDuckDB(new duckdb.VoidLogger(), new Worker(workerUrl));
+    await ddb.instantiate(bundle.mainModule, bundle.pthreadWorker, p => {
+      if (p.bytesTotal > 0){ loadPct = Math.min(99, Math.round(100 * p.bytesLoaded / p.bytesTotal)); if (!dbReady) setStatus('loading'); }
+    });
+    URL.revokeObjectURL(workerUrl);
+    const [u, ev] = await csvs;
+    await ddb.registerFileText('users.csv', u);
+    await ddb.registerFileText('events.csv', ev);
+    db = await ddb.connect();
+    await db.query(`
+      CREATE TABLE users (user_id INTEGER PRIMARY KEY, first_seen_at TIMESTAMP NOT NULL, acquisition_channel VARCHAR NOT NULL, device VARCHAR NOT NULL, country VARCHAR NOT NULL);
+      CREATE TABLE events (event_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, event_name VARCHAR NOT NULL, event_at TIMESTAMP NOT NULL);
+      INSERT INTO users  SELECT * FROM read_csv('users.csv',  header = true, columns = {'user_id':'INTEGER','first_seen_at':'TIMESTAMP','acquisition_channel':'VARCHAR','device':'VARCHAR','country':'VARCHAR'});
+      INSERT INTO events SELECT * FROM read_csv('events.csv', header = true, columns = {'event_id':'INTEGER','user_id':'INTEGER','event_name':'VARCHAR','event_at':'TIMESTAMP'});`);
     dbReady = true; $('#run').disabled = false; setStatus('ready', true);
-  } catch(e){ setStatus('⚠ ' + e.message); }
+  } catch(e){ console.error(e); setStatus('⚠ ' + (e && e.message || e)); }
 })();
 
 // theme toggle
