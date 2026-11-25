@@ -17,7 +17,7 @@ People who work on product but aren't the most technical in the squad: PMs, POs,
 - Q1–Q2: aggregations (COUNT, COUNT DISTINCT, GROUP BY)
 - Q3–Q4: JOINs with aggregation
 - Q5–Q6: subqueries (WHERE … IN / NOT IN, subquery in FROM)
-- Q7–Q8: window functions (running totals, LAG, FIRST_VALUE)
+- Q7–Q8: window functions (running totals, RANK with PARTITION BY; keep Q8 approachable, no multi-window funnels)
 Each question: context (who asks and why), the ask, concept chips, hint, solution + takeaways.
 
 ## Week 01: The Signup Funnel (done)
@@ -25,7 +25,7 @@ Fictional app "Trilha" (language learning). Tables `users` (9,000 rows) and `eve
 - Q1 visitors by channel · Q2 COUNT(*) vs COUNT DISTINCT (2,402 signup events vs 2,334 users)
 - Q3 signup rate by device (desktop 26.7% vs mobile 25.5%: hypothesis rejected) · Q4 signup→paying by channel (paid_social 3.4% vs referral 23.4%)
 - Q5 November signups without onboarding (222 users, CRM list) · Q6 onboarding rate before/after v2 (46.2% → 58.7%, signups before Nov 9)
-- Q7 running total of paying customers (crossed 200 on Oct 28) · Q8 funnel with % of top and % of previous step
+- Q7 running total of paying customers (crossed 200 on Oct 28) · Q8 rank channels by paying customers within each country (`RANK() OVER (PARTITION BY country …)`: organic/referral win everywhere, paid_social #1 in signups but last in paying in BR/MX/AR, tie in CO, CL has no paid_social customers)
 Generator: `generators/week01_signup_funnel.py 5` (seed 5).
 
 ## How pages are built

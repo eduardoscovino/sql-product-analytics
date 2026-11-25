@@ -313,14 +313,14 @@ const Q = [
        pt:"O OKR do trimestre era \"200 clientes pagantes até 31 de outubro\". Batemos? Quando?"},
   hint:{en:"First count customers per day in a subquery: <code>CAST(event_at AS DATE)</code> and <code>COUNT(DISTINCT user_id)</code>. On top of it, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> adds up everything up to each day.",
         pt:"Primeiro conte os clientes por dia numa subconsulta: <code>CAST(event_at AS DATE)</code> e <code>COUNT(DISTINCT user_id)</code>. Por cima dela, <code>SUM(new_customers) OVER (ORDER BY purchase_date)</code> soma tudo até cada dia."}},
- {lvl:"l4", chips:["LAG()","FIRST_VALUE()","OVER (ORDER BY …)"],
-  title:{en:"The funnel slide for the leadership meeting", pt:"O slide do funil para a reunião de liderança"},
-  ask:{en:"Build the funnel: unique users at each step, % of all visitors, and % of the previous step.",
-       pt:"Monte o funil: usuários únicos em cada etapa, % do total de visitantes e % da etapa anterior."},
-  biz:{en:"This is the slide leadership looks at every month. Where is the biggest leak, and where would you invest first?",
-       pt:"Este é o slide que a liderança olha todo mês. Onde está o maior vazamento, e onde você investiria primeiro?"},
-  hint:{en:"In a subquery, count unique users per <code>event_name</code> and give each step a number with <code>CASE</code> (landing_view = 1 … first_purchase = 4). Outside it, <code>FIRST_VALUE(users) OVER (ORDER BY step)</code> returns the top of the funnel and <code>LAG(users) OVER (ORDER BY step)</code> returns the previous step.",
-        pt:"Numa subconsulta, conte usuários únicos por <code>event_name</code> e dê um número a cada etapa com <code>CASE</code> (landing_view = 1 … first_purchase = 4). Fora dela, <code>FIRST_VALUE(users) OVER (ORDER BY step)</code> traz o topo do funil e <code>LAG(users) OVER (ORDER BY step)</code> traz a etapa anterior."}}
+ {lvl:"l4", chips:["RANK()","OVER (PARTITION BY … ORDER BY …)"],
+  title:{en:"Which channel wins in each country?", pt:"Qual canal ganha em cada país?"},
+  ask:{en:"For each country, rank the acquisition channels by number of paying customers (1 = the channel with the most). Show country, channel, paying customers and the rank.",
+       pt:"Para cada país, ranqueie os canais de aquisição pelo número de clientes pagantes (1 = o canal com mais clientes). Mostre país, canal, clientes pagantes e o ranking."},
+  biz:{en:"Each country manager is planning next quarter's budget and asks: \"In <i>my</i> country, which channel brings the most paying customers?\" They want one ranking per country, not a single overall ranking.",
+       pt:"Cada country manager está planejando o orçamento do próximo trimestre e pergunta: \"No <i>meu</i> país, qual canal traz mais clientes pagantes?\" Eles querem um ranking por país, não um ranking geral."},
+  hint:{en:"Step 1: a subquery that counts paying customers per country and channel (<code>event_name = 'first_purchase'</code>, <code>COUNT(DISTINCT user_id)</code>, <code>GROUP BY</code> both columns). Step 2: on top of it, <code>RANK() OVER (PARTITION BY country ORDER BY paying_customers DESC)</code>. <code>PARTITION BY</code> restarts the ranking for each country.",
+        pt:"Passo 1: uma subconsulta que conta clientes pagantes por país e canal (<code>event_name = 'first_purchase'</code>, <code>COUNT(DISTINCT user_id)</code>, <code>GROUP BY</code> nas duas colunas). Passo 2: por cima dela, <code>RANK() OVER (PARTITION BY country ORDER BY paying_customers DESC)</code>. O <code>PARTITION BY</code> reinicia o ranking a cada país."}}
 ];
 
 const T = {
